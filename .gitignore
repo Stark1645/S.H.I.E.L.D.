@@ -1,0 +1,109 @@
+# ==========================================
+# General
+# ==========================================
+.DS_Store
+Thumbs.db
+*.log
+logs/
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# ==========================================
+# Environment Variables
+# ==========================================
+.env
+.env.*
+*.env
+
+# ==========================================
+# ================= FRONTEND (React/Vite) =================
+# ==========================================
+
+# Node dependencies
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+frontend/dist/
+
+# Vite cache
+.vite/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Local config
+*.local
+
+# ==========================================
+# ================= PYTHON (ML SERVICE) =================
+# ==========================================
+
+# Virtual environment
+venv/
+ml-service-python/venv/
+.env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pytest_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ==========================================
+# ================= JAVA (Spring Boot) =================
+# ==========================================
+
+# Maven
+target/
+backend-java/target/
+
+# Compiled files
+*.class
+
+# Spring Boot
+*.jar
+*.war
+
+# IntelliJ
+.idea/
+*.iml
+
+# ==========================================
+# ================= IDE / EDITORS =================
+# ==========================================
+
+# VS Code
+.vscode/*
+!.vscode/extensions.json
+
+# IntelliJ / Eclipse
+*.project
+*.classpath
+.settings/
+
+# Visual Studio
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ==========================================
+# ================= OS FILES =================
+# ==========================================
+
+Desktop.ini
