@@ -17,18 +17,22 @@ public class AuthService {
     private final JwtUtil jwtUtil;
 
     public Map<String, String> login(String username, String password) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
-        
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
-        }
+        try {
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+            
+            if (!passwordEncoder.matches(password, user.getPassword())) {
+                throw new RuntimeException("Invalid credentials");
+            }
 
-        Map<String, String> tokens = new HashMap<>();
-        tokens.put("accessToken", jwtUtil.generateAccessToken(username, user.getRole()));
-        tokens.put("refreshToken", jwtUtil.generateRefreshToken(username));
-        tokens.put("role", user.getRole());
-        return tokens;
+            Map<String, String> tokens = new HashMap<>();
+            tokens.put("accessToken", jwtUtil.generateAccessToken(username, user.getRole()));
+            tokens.put("refreshToken", jwtUtil.generateRefreshToken(username));
+            tokens.put("role", user.getRole());
+            return tokens;
+        } catch (Exception e) {
+            throw new RuntimeException("Login failed: " + e.getMessage(), e);
+        }
     }
 
     public User register(String username, String password, String role) {

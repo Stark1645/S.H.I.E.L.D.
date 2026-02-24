@@ -34,10 +34,35 @@ const SimulationControl: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) =>
     }
   }, [progress, activeSim]);
 
-  const startSimulation = (name: string) => {
+  const startSimulation = async (name: string) => {
     if (activeSim) return;
     setActiveSim(name);
     notify(`Initializing War Game: ${name}`, "warning");
+    
+    try {
+      const token = localStorage.getItem('shield_token');
+      const response = await fetch('http://localhost:8080/api/threats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          sourceIP: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+          targetSystem: 'Simulation-Target',
+          threatType: name,
+          severityScore: intensity / 10,
+          intentClassification: 'Simulated Attack',
+          status: 'ACTIVE'
+        })
+      });
+      
+      if (response.ok) {
+        notify(`Simulated threat created. Agents responding...`, "info");
+      }
+    } catch (error) {
+      console.error('Simulation error:', error);
+    }
   };
 
   const scenarios = [

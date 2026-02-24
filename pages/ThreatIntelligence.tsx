@@ -1,64 +1,38 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ThreatEvent, ThreatStatus } from '../types';
 import { useNotify } from '../App';
+import { threatAPI } from '../services/api';
 
 const ThreatIntelligence: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
   const { notify } = useNotify();
   const [filterText, setFilterText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [threats, setThreats] = useState<ThreatEvent[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const threats: ThreatEvent[] = [
-    {
-      id: 'TR-902',
-      sourceIP: '104.18.23.45',
-      targetSystem: 'API-Gateway-Primary',
-      threatType: 'DDoS / SYN Flood',
-      severityScore: 9.4,
-      intentClassification: 'Resource Exhaustion',
-      status: ThreatStatus.CONTAINED,
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: 'TR-903',
-      sourceIP: '192.168.1.101',
-      targetSystem: 'User-DB-Master',
-      threatType: 'SQL Injection',
-      severityScore: 8.7,
-      intentClassification: 'Data Exfiltration',
-      status: ThreatStatus.DETECTED,
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: 'TR-904',
-      sourceIP: '45.132.8.12',
-      targetSystem: 'Worker-Node-07',
-      threatType: 'Reverse Shell',
-      severityScore: 9.8,
-      intentClassification: 'System Takeover',
-      status: ThreatStatus.SIMULATED,
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: 'TR-905',
-      sourceIP: '172.24.5.11',
-      targetSystem: 'Auth-Cluster',
-      threatType: 'Credential Stuffing',
-      severityScore: 6.2,
-      intentClassification: 'Account Takeover',
-      status: ThreatStatus.RESOLVED,
-      timestamp: new Date().toISOString()
-    }
-  ];
+  useEffect(() => {
+    const fetchThreats = async () => {
+      try {
+        const data = await threatAPI.getAll();
+        setThreats(data);
+      } catch (error) {
+        console.error('Failed to fetch threats:', error);
+      }
+    };
+    fetchThreats();
+    const interval = setInterval(fetchThreats, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   const filteredThreats = useMemo(() => {
     return threats.filter(t => 
-      t.id.toLowerCase().includes(filterText.toLowerCase()) ||
+      String(t.id).toLowerCase().includes(filterText.toLowerCase()) ||
       t.sourceIP.includes(filterText) ||
       t.threatType.toLowerCase().includes(filterText.toLowerCase()) ||
       t.targetSystem.toLowerCase().includes(filterText.toLowerCase())
     );
-  }, [filterText]);
+  }, [threats, filterText]);
 
   const handleGenerateReport = () => {
     setIsGenerating(true);
@@ -141,14 +115,113 @@ const ThreatIntelligence: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) =
                   </td>
                   <td className="px-6 py-4 text-right flex justify-end gap-1">
                     <button 
-                      onClick={() => notify(`Analyzing source origin for ${t.sourceIP}...`)}
+                      onClick={async () => {
+                        try {
+                          const token = localStorage.getItem('shield_token');
+                          await fetch(`http://localhost:8080/api/threats/${t.id}`, {
+                            method: 'PUT',
+                            headers: {
+                              'Authorization': `Bearer ${token}`,
+                              'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({...t, status: 'CONTAINED'})
+                          });
+                          notify(`Threat ${t.id} marked as CONTAINED`, 'success');
+                          setThreats(prev => prev.map(th => th.id === t.id ? {...th, status: 'CONTAINED'} : th));
+                        } catch (error) {
+                          notify('Failed to update threat', 'error');
+                        }
+                      }}
+                      className="text-slate-400 hover:text-green-600 dark:hover:text-green-400 p-2 transition-transform hover:scale-125"
+                      title="Mark as Contained"
+                    >
+                      <i className="fa-solid fa-shield-halved"></i>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        const modal = document.createElement('div');
+                        modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm';
+                        modal.innerHTML = `
+                          <div class="${isDarkMode ? 'bg-slate-900 border-cyan-500/50' : 'bg-white border-slate-200'} border rounded-2xl p-8 max-w-2xl w-full">
+                            <div class="flex justify-between items-start mb-6">
+                              <div>
+                                <h3 class="text-2xl font-bold">IP Trace: ${t.sourceIP}</h3>
+                                <p class="text-cyan-600 dark:text-cyan-400 font-mono text-sm">Threat ID: ${t.id}</p>
+                              </div>
+                              <button onclick="this.closest('.fixed').remove()" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg">
+                                <i class="fa-solid fa-xmark text-xl"></i>
+                              </button>
+                            </div>
+                            <div class="space-y-4">
+                              <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                                <p class="text-xs uppercase font-bold text-slate-500 mb-2">Geolocation</p>
+                                <p class="${isDarkMode ? 'text-slate-300' : 'text-slate-700'}">Country: Unknown | ISP: ${t.sourceIP.split('.')[0] > 100 ? 'Commercial VPN' : 'Residential'}</p>
+                              </div>
+                              <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                                <p class="text-xs uppercase font-bold text-slate-500 mb-2">Threat Intelligence</p>
+                                <p class="${isDarkMode ? 'text-slate-300' : 'text-slate-700'} font-mono text-sm">Reputation: Malicious | Last Seen: ${new Date().toLocaleString()}</p>
+                              </div>
+                            </div>
+                          </div>
+                        `;
+                        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+                        document.body.appendChild(modal);
+                      }}
                       className="text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 p-2 transition-transform hover:scale-125"
                       title="Trace Origin"
                     >
                       <i className="fa-solid fa-crosshairs"></i>
                     </button>
                     <button 
-                      onClick={() => notify(`Viewing forensic evidence for ${t.id}`)}
+                      onClick={() => {
+                        const modal = document.createElement('div');
+                        modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm';
+                        modal.innerHTML = `
+                          <div class="${isDarkMode ? 'bg-slate-900 border-cyan-500/50' : 'bg-white border-slate-200'} border rounded-2xl p-8 max-w-3xl w-full">
+                            <div class="flex justify-between items-start mb-6">
+                              <div>
+                                <h3 class="text-2xl font-bold">Forensic Evidence</h3>
+                                <p class="text-cyan-600 dark:text-cyan-400 font-mono text-sm">Threat ID: ${t.id}</p>
+                              </div>
+                              <button onclick="this.closest('.fixed').remove()" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg">
+                                <i class="fa-solid fa-xmark text-xl"></i>
+                              </button>
+                            </div>
+                            <div class="space-y-4">
+                              <div class="grid grid-cols-2 gap-4">
+                                <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                                  <p class="text-xs uppercase font-bold text-slate-500 mb-1">Source IP</p>
+                                  <p class="font-mono text-cyan-500">${t.sourceIP}</p>
+                                </div>
+                                <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                                  <p class="text-xs uppercase font-bold text-slate-500 mb-1">Target System</p>
+                                  <p class="font-semibold">${t.targetSystem}</p>
+                                </div>
+                              </div>
+                              <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                                <p class="text-xs uppercase font-bold text-slate-500 mb-2">Threat Type</p>
+                                <p class="${isDarkMode ? 'text-slate-300' : 'text-slate-700'}">${t.threatType}</p>
+                              </div>
+                              <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                                <p class="text-xs uppercase font-bold text-slate-500 mb-2">Intent Classification</p>
+                                <p class="${isDarkMode ? 'text-slate-300' : 'text-slate-700'}">${t.intentClassification || 'Unknown'}</p>
+                              </div>
+                              <div class="grid grid-cols-2 gap-4">
+                                <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                                  <p class="text-xs uppercase font-bold text-slate-500 mb-1">Severity Score</p>
+                                  <p class="text-2xl font-bold text-red-500">${t.severityScore}/10</p>
+                                </div>
+                                <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                                  <p class="text-xs uppercase font-bold text-slate-500 mb-1">Status</p>
+                                  <p class="text-xl font-bold text-cyan-500">${t.status}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        `;
+                        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+                        document.body.appendChild(modal);
+                      }}
                       className="text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 p-2 transition-transform hover:scale-125"
                       title="View Evidence"
                     >

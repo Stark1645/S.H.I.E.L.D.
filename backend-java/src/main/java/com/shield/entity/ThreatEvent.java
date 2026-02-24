@@ -13,18 +13,18 @@ public class ThreatEvent {
     private Long id;
 
     private String threatType;
-    private String severity;
-    private String sourceIp;
+    private String sourceIP;
     private String targetSystem;
     private String status;
+    private Double severityScore;
+    private String intentClassification;
     
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private Double anomalyScore;
     private String predictedEscalation;
     private String recommendedAction;
 
-    private LocalDateTime detectedAt = LocalDateTime.now();
+    private LocalDateTime timestamp = LocalDateTime.now();
     private LocalDateTime resolvedAt;
 }

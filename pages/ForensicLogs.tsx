@@ -74,7 +74,45 @@ const ForensicLogs: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
         {filteredLogs.length > 0 ? filteredLogs.map(log => (
           <div 
             key={log.id} 
-            onClick={() => notify(`Trace Record ${log.id}: ${log.details}`)}
+            onClick={() => {
+              const modal = document.createElement('div');
+              modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm';
+              modal.innerHTML = `
+                <div class="${isDarkMode ? 'bg-slate-900 border-cyan-500/50' : 'bg-white border-slate-200'} border rounded-2xl p-8 max-w-2xl w-full">
+                  <div class="flex justify-between items-start mb-6">
+                    <div>
+                      <h3 class="text-2xl font-bold">Forensic Record #${log.id}</h3>
+                      <p class="text-cyan-600 dark:text-cyan-400 font-mono text-sm">${log.type} | ${log.time}</p>
+                    </div>
+                    <button onclick="this.closest('.fixed').remove()" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg">
+                      <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                  </div>
+                  <div class="space-y-4">
+                    <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                      <p class="text-xs uppercase font-bold text-slate-500 mb-2">Event Summary</p>
+                      <p class="${isDarkMode ? 'text-slate-300' : 'text-slate-700'}">${log.msg}</p>
+                    </div>
+                    <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                      <p class="text-xs uppercase font-bold text-slate-500 mb-2">Technical Details</p>
+                      <p class="${isDarkMode ? 'text-slate-300' : 'text-slate-700'} font-mono text-sm">${log.details}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                      <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                        <p class="text-xs uppercase font-bold text-slate-500 mb-1">Log Type</p>
+                        <p class="font-bold text-cyan-500">${log.type}</p>
+                      </div>
+                      <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                        <p class="text-xs uppercase font-bold text-slate-500 mb-1">Timestamp</p>
+                        <p class="font-mono text-sm">${log.time}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `;
+              modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+              document.body.appendChild(modal);
+            }}
             className={`glass-card p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all cursor-pointer group active:scale-[0.99] ${isDarkMode ? 'border-slate-800 hover:border-cyan-500/30' : 'border-slate-200 hover:border-cyan-200 shadow-sm'}`}
           >
             <div className={`px-2 py-1 rounded text-[10px] font-bold font-mono border min-w-[75px] text-center uppercase tracking-tighter ${getLogStyle(log.type)}`}>
@@ -106,7 +144,20 @@ const ForensicLogs: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
            <p className="text-slate-400 text-xs mt-1">Full immutable archives are accessible via Level 8 tactical clearance.</p>
          </div>
          <button 
-           onClick={() => notify("Connecting to Cloud Archive... Requesting clearance.", "warning")}
+           onClick={() => {
+             const userRole = localStorage.getItem('shield_role') || 'USER';
+             if (userRole === 'DIRECTOR') {
+               notify("Access Granted: Level 20 clearance verified. Loading archives...", "success");
+               setTimeout(() => {
+                 notify("Cloud Archive connected. 50,000 historical records available.", "info");
+               }, 2000);
+             } else {
+               notify("Connecting to Cloud Archive... Requesting clearance.", "warning");
+               setTimeout(() => {
+                 notify(`Access Denied: Level 8 clearance required. Current user: ${userRole}`, "error");
+               }, 2000);
+             }
+           }}
            className={`px-6 py-2 text-xs font-bold rounded-lg border transition-all ${isDarkMode ? 'text-slate-400 border-slate-700 hover:text-white hover:bg-slate-800' : 'text-slate-600 border-slate-300 hover:bg-white hover:border-cyan-500 hover:text-cyan-600 shadow-sm'}`}
          >
            BROWSE CLOUD ARCHIVES

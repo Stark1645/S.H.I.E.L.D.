@@ -1,24 +1,35 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell
 } from 'recharts';
 import { AgentDecision } from '../types';
 import { useNotify } from '../App';
+import { threatAPI, agentAPI } from '../services/api';
 
 const Dashboard: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
   const { notify } = useNotify();
   const [selectedNode, setSelectedNode] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [nodeStates, setNodeStates] = useState<string[]>(Array(50).fill('healthy'));
   
-  const [stats] = useState({
-    total: 1248,
-    active: 14,
-    severity: 7.8,
-    containment: 94.2
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    severity: 0,
+    containment: 0
   });
 
-  const [trendData] = useState([
+  const [animatedStats, setAnimatedStats] = useState({
+    total: 0,
+    active: 0,
+    severity: 0,
+    containment: 0
+  });
+
+  const [decisions, setDecisions] = useState<AgentDecision[]>([]);
+  const [trendData, setTrendData] = useState([
     { time: '00:00', value: 34 },
     { time: '04:00', value: 45 },
     { time: '08:00', value: 28 },
@@ -28,38 +39,83 @@ const Dashboard: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
     { time: '23:59', value: 55 },
   ]);
 
-  const [distributionData] = useState([
+  useEffect(() => {
+    const updateTrend = setInterval(() => {
+      setTrendData(prev => {
+        const newData = [...prev.slice(1)];
+        const lastValue = prev[prev.length - 1].value;
+        const newValue = Math.max(20, Math.min(100, lastValue + (Math.random() - 0.5) * 20));
+        const now = new Date();
+        newData.push({
+          time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          value: Math.round(newValue)
+        });
+        return newData;
+      });
+    }, 3000);
+    return () => clearInterval(updateTrend);
+  }, []);
+
+  useEffect(() => {
+    const updateNodes = setInterval(() => {
+      setNodeStates(prev => {
+        const newStates = [...prev];
+        if (Math.random() > 0.7) {
+          const idx = Math.floor(Math.random() * 50);
+          const states = ['healthy', 'warning', 'critical'];
+          newStates[idx] = states[Math.floor(Math.random() * states.length)];
+        }
+        return newStates;
+      });
+    }, 2000);
+    return () => clearInterval(updateNodes);
+  }, []);
+
+  useEffect(() => {
+    const updateDistribution = setInterval(() => {
+      setDistributionData(prev => prev.map(item => ({
+        ...item,
+        value: Math.max(100, Math.min(500, Math.round(item.value + (Math.random() - 0.5) * 50)))
+      })));
+    }, 4000);
+    return () => clearInterval(updateDistribution);
+  }, []);
+    useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [statsData, decisionsData] = await Promise.all([
+          threatAPI.getStats(),
+          agentAPI.getAllDecisions()
+        ]);
+        setStats(statsData);
+        setDecisions(decisionsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5));
+      } catch (error) {
+        console.error('Dashboard fetch error:', error);
+      }
+    };
+    fetchData();
+    const interval = setInterval(fetchData, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const animateStats = () => {
+      setAnimatedStats(prev => ({
+        total: prev.total + (stats.total - prev.total) * 0.1,
+        active: prev.active + (stats.active - prev.active) * 0.1,
+        severity: prev.severity + (stats.severity - prev.severity) * 0.1,
+        containment: prev.containment + (stats.containment - prev.containment) * 0.1
+      }));
+    };
+    const interval = setInterval(animateStats, 50);
+    return () => clearInterval(interval);
+  }, [stats]);
+
+  const [distributionData, setDistributionData] = useState([
     { name: 'DDoS', value: 400, color: '#ef4444' },
     { name: 'SQLi', value: 300, color: '#f59e0b' },
     { name: 'Phishing', value: 300, color: '#3b82f6' },
     { name: 'Malware', value: 200, color: '#10b981' },
-  ]);
-
-  const [decisions] = useState<AgentDecision[]>([
-    {
-      id: '1',
-      agentName: 'Sentinel-Alpha',
-      decisionSummary: 'Isolating System-04 due to anomalous outbound traffic.',
-      confidenceScore: 0.98,
-      linkedThreatId: 'TR-902',
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: '2',
-      agentName: 'Risk-Evaluator',
-      decisionSummary: 'Upgraded Threat Level to CRITICAL for IP 192.168.1.45.',
-      confidenceScore: 0.85,
-      linkedThreatId: 'TR-903',
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: '3',
-      agentName: 'Orchestrator',
-      decisionSummary: 'Deploying Deceptive Honeypot nodes in Sector G.',
-      confidenceScore: 0.92,
-      linkedThreatId: 'TR-904',
-      createdAt: new Date().toISOString()
-    }
   ]);
 
   const handleNodeClick = (id: number) => {
@@ -102,15 +158,36 @@ const Dashboard: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
                 <p className="text-green-600 font-bold">&gt;&gt;&gt; VERDICT: ALLOWED</p>
               </div>
 
-              <button 
-                onClick={() => {
-                  notify(`Node ${selectedNode} isolated for deep inspection`, "warning");
-                  setSelectedNode(null);
-                }}
-                className={`w-full py-3 font-bold rounded-xl transition-all border ${isDarkMode ? 'bg-red-600/20 hover:bg-red-600 border-red-500/50 text-red-500 hover:text-white' : 'bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border-red-200'}`}
-              >
-                ISOLATE NODE
-              </button>
+              <div className="grid grid-cols-2 gap-3">
+                <button 
+                  onClick={() => {
+                    notify(`Node ${selectedNode} isolated for deep inspection`, "warning");
+                    setNodeStates(prev => {
+                      const newStates = [...prev];
+                      if (selectedNode !== null) newStates[selectedNode - 1] = 'critical';
+                      return newStates;
+                    });
+                    setSelectedNode(null);
+                  }}
+                  className={`py-3 font-bold rounded-xl transition-all border ${isDarkMode ? 'bg-red-600/20 hover:bg-red-600 border-red-500/50 text-red-500 hover:text-white' : 'bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border-red-200'}`}
+                >
+                  ISOLATE NODE
+                </button>
+                <button 
+                  onClick={() => {
+                    notify(`Node ${selectedNode} restored to healthy state`, "success");
+                    setNodeStates(prev => {
+                      const newStates = [...prev];
+                      if (selectedNode !== null) newStates[selectedNode - 1] = 'healthy';
+                      return newStates;
+                    });
+                    setSelectedNode(null);
+                  }}
+                  className={`py-3 font-bold rounded-xl transition-all border ${isDarkMode ? 'bg-green-600/20 hover:bg-green-600 border-green-500/50 text-green-500 hover:text-white' : 'bg-green-50 hover:bg-green-600 text-green-600 hover:text-white border-green-200'}`}
+                >
+                  RESTORE NODE
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -118,10 +195,10 @@ const Dashboard: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Total Events" value={stats.total} icon="fa-database" color="text-cyan-600 dark:text-cyan-400" onClick={() => notify("Global telemetry log access synchronized")} isDarkMode={isDarkMode} />
-        <MetricCard label="Active Threats" value={stats.active} icon="fa-radiation" color="text-red-500" pulse onClick={() => notify("Immediate intervention required in 3 sectors", "error")} isDarkMode={isDarkMode} />
-        <MetricCard label="Avg Severity" value={stats.severity} icon="fa-fire" color="text-amber-500" onClick={() => notify("Severity score recalculated based on current heuristics")} isDarkMode={isDarkMode} />
-        <MetricCard label="Containment Rate" value={`${stats.containment}%`} icon="fa-shield-halved" color="text-green-500" onClick={() => notify("Current containment strategy successful", "success")} isDarkMode={isDarkMode} />
+        <MetricCard label="Total Events" value={Math.round(animatedStats.total)} icon="fa-database" color="text-cyan-600 dark:text-cyan-400" onClick={() => notify("Global telemetry log access synchronized")} isDarkMode={isDarkMode} />
+        <MetricCard label="Active Threats" value={Math.round(animatedStats.active)} icon="fa-radiation" color="text-red-500" pulse onClick={() => notify("Immediate intervention required in 3 sectors", "error")} isDarkMode={isDarkMode} />
+        <MetricCard label="Avg Severity" value={Math.round(animatedStats.severity)} icon="fa-fire" color="text-amber-500" onClick={() => notify("Severity score recalculated based on current heuristics")} isDarkMode={isDarkMode} />
+        <MetricCard label="Containment Rate" value={`${Math.round(animatedStats.containment)}%`} icon="fa-shield-halved" color="text-green-500" onClick={() => notify("Current containment strategy successful", "success")} isDarkMode={isDarkMode} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -135,66 +212,60 @@ const Dashboard: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
             <span className={`text-[10px] font-mono px-2 py-1 rounded ${isDarkMode ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-600'}`}>LIVE SCANNING</span>
           </div>
           <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 min-h-[16rem]">
-            {Array.from({ length: 50 }).map((_, i) => {
-              const status = i === 12 || i === 44 ? 'critical' : i === 7 || i === 29 ? 'warning' : 'healthy';
-              return (
-                <div 
-                  key={i} 
-                  onClick={() => handleNodeClick(i + 1)}
-                  className={`cursor-pointer rounded-sm transition-all duration-300 flex items-center justify-center text-[8px] font-mono border hover:scale-110 hover:z-10 ${
-                    status === 'critical' ? 'bg-red-500/40 border-red-500 animate-pulse' :
-                    status === 'warning' ? 'bg-amber-500/20 border-amber-500' :
-                    `${isDarkMode ? 'bg-slate-800/40 border-slate-700 hover:border-cyan-500' : 'bg-slate-100 border-slate-200 hover:border-cyan-400 hover:bg-cyan-50'}`
-                  } shadow-[inset_0_0_10px_rgba(0,0,0,0.05)]`}
-                  title={`Node ${i+1}: ${status.toUpperCase()}`}
-                >
-                  {i + 1}
-                </div>
-              );
-            })}
+            {nodeStates.map((status, i) => (
+              <div 
+                key={i} 
+                onClick={() => handleNodeClick(i + 1)}
+                className={`cursor-pointer rounded-sm transition-all duration-500 flex items-center justify-center text-[8px] font-mono border hover:scale-110 hover:z-10 ${
+                  status === 'critical' ? 'bg-red-500/40 border-red-500 animate-pulse' :
+                  status === 'warning' ? 'bg-amber-500/20 border-amber-500' :
+                  `${isDarkMode ? 'bg-slate-800/40 border-slate-700 hover:border-cyan-500' : 'bg-slate-100 border-slate-200 hover:border-cyan-400 hover:bg-cyan-50'}`
+                } shadow-[inset_0_0_10px_rgba(0,0,0,0.05)]`}
+                title={`Node ${i+1}: ${status.toUpperCase()}`}
+              >
+                {i + 1}
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Severity Distribution */}
         <div className={`glass-card rounded-xl p-6 border ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
            <h3 className="font-bold text-lg mb-6">Threat Vectors</h3>
-           <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={distributionData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {distributionData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={entry.color} 
-                        className="cursor-pointer hover:opacity-80 transition-opacity" 
-                        onClick={() => notify(`Filtering view for ${entry.name} vectors`)}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: isDarkMode ? '#0f172a' : '#ffffff', 
-                      border: `1px solid ${isDarkMode ? '#1e293b' : '#e2e8f0'}`, 
-                      borderRadius: '8px',
-                      color: isDarkMode ? '#f8fafc' : '#0f172a'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+           <div className="w-full h-64 flex items-center justify-center">
+             <svg width="200" height="200" viewBox="0 0 200 200">
+               {distributionData.map((d, i) => {
+                 const total = distributionData.reduce((sum, item) => sum + item.value, 0);
+                 const startAngle = distributionData.slice(0, i).reduce((sum, item) => sum + (item.value / total) * 360, 0);
+                 const angle = (d.value / total) * 360;
+                 const endAngle = startAngle + angle;
+                 const largeArc = angle > 180 ? 1 : 0;
+                 const x1 = 100 + 70 * Math.cos((startAngle - 90) * Math.PI / 180);
+                 const y1 = 100 + 70 * Math.sin((startAngle - 90) * Math.PI / 180);
+                 const x2 = 100 + 70 * Math.cos((endAngle - 90) * Math.PI / 180);
+                 const y2 = 100 + 70 * Math.sin((endAngle - 90) * Math.PI / 180);
+                 const xi1 = 100 + 50 * Math.cos((startAngle - 90) * Math.PI / 180);
+                 const yi1 = 100 + 50 * Math.sin((startAngle - 90) * Math.PI / 180);
+                 const xi2 = 100 + 50 * Math.cos((endAngle - 90) * Math.PI / 180);
+                 const yi2 = 100 + 50 * Math.sin((endAngle - 90) * Math.PI / 180);
+                 return (
+                   <path
+                     key={i}
+                     d={`M ${xi1} ${yi1} L ${x1} ${y1} A 70 70 0 ${largeArc} 1 ${x2} ${y2} L ${xi2} ${yi2} A 50 50 0 ${largeArc} 0 ${xi1} ${yi1} Z`}
+                     fill={d.color}
+                     className="cursor-pointer hover:opacity-80 transition-opacity"
+                     onClick={() => notify(`${d.name}: ${d.value} incidents`)}
+                   />
+                 );
+               })}
+             </svg>
            </div>
            <div className="grid grid-cols-2 gap-2 mt-4">
               {distributionData.map(d => (
-                <div key={d.name} className={`flex items-center gap-2 text-xs cursor-pointer p-1 rounded transition-colors ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`} onClick={() => notify(`Drill-down: ${d.name}`)}>
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }}></div>
-                  <span className="text-slate-500 dark:text-slate-400">{d.name}</span>
+                <div key={d.name} className={`flex items-center gap-2 text-xs cursor-pointer p-2 rounded transition-colors ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`} onClick={() => notify(`Drill-down: ${d.name} - ${d.value} incidents`)}>
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }}></div>
+                  <span className="font-medium">{d.name}</span>
+                  <span className="text-slate-500 ml-auto">{d.value}</span>
                 </div>
               ))}
            </div>
@@ -243,7 +314,41 @@ const Dashboard: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
             {decisions.map(d => (
               <div 
                 key={d.id} 
-                onClick={() => notify(`Viewing decision details for ${d.id}`)}
+                onClick={() => {
+                  const modal = document.createElement('div');
+                  modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm';
+                  modal.innerHTML = `
+                    <div class="${isDarkMode ? 'bg-slate-900 border-cyan-500/50' : 'bg-white border-slate-200'} border rounded-2xl p-8 max-w-2xl w-full">
+                      <div class="flex justify-between items-start mb-6">
+                        <div>
+                          <h3 class="text-2xl font-bold">${d.agentName}</h3>
+                          <p class="text-cyan-600 dark:text-cyan-400 font-mono text-sm">Decision ID: ${d.id} | Threat ID: ${d.linkedThreatId}</p>
+                        </div>
+                        <button onclick="this.closest('.fixed').remove()" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg">
+                          <i class="fa-solid fa-xmark text-xl"></i>
+                        </button>
+                      </div>
+                      <div class="space-y-4">
+                        <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                          <p class="text-xs uppercase font-bold text-slate-500 mb-2">Decision Summary</p>
+                          <p class="${isDarkMode ? 'text-slate-300' : 'text-slate-700'}">${d.decisionSummary}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                          <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                            <p class="text-xs uppercase font-bold text-slate-500 mb-1">Confidence Score</p>
+                            <p class="text-2xl font-bold text-cyan-500">${(d.confidenceScore * 100).toFixed(1)}%</p>
+                          </div>
+                          <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                            <p class="text-xs uppercase font-bold text-slate-500 mb-1">Timestamp</p>
+                            <p class="font-mono text-sm">${new Date(d.createdAt).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+                  document.body.appendChild(modal);
+                }}
                 className={`p-3 rounded-lg border-l-4 transition-all cursor-pointer group hover:scale-[1.01] ${isDarkMode ? 'bg-slate-800/50 border-cyan-500 hover:bg-slate-800' : 'bg-white border-cyan-600 hover:bg-slate-50 border-slate-200 shadow-sm'}`}
               >
                 <div className="flex justify-between items-start mb-1">

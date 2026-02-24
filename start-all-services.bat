@@ -5,7 +5,7 @@ echo ========================================
 echo.
 
 echo [1/3] Starting ML Service (Python FastAPI)...
-start "ML Service" cmd /k "cd ml-service-python && venv\Scripts\activate && cd app && python main.py"
+start "ML Service" cmd /k "cd ml-service-python && venv\Scripts\activate && python -m app.main"
 timeout /t 5
 
 echo [2/3] Starting Backend (Spring Boot)...

@@ -42,7 +42,51 @@ const AgentMonitor: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
         {agents.map(a => {
           const isActing = actingAgents.has(a.name);
           return (
-            <div key={a.name} className={`glass-card rounded-xl border transition-all duration-500 overflow-hidden flex flex-col group ${isActing ? 'border-amber-500 scale-[0.98] opacity-80' : `${isDarkMode ? 'border-slate-800 hover:border-cyan-500/50' : 'border-slate-200 hover:border-cyan-200 shadow-sm'}`}`}>
+            <div key={a.name} 
+              onClick={() => {
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm';
+                modal.innerHTML = `
+                  <div class="${isDarkMode ? 'bg-slate-900 border-cyan-500/50' : 'bg-white border-slate-200'} border rounded-2xl p-8 max-w-2xl w-full">
+                    <div class="flex justify-between items-start mb-6">
+                      <div>
+                        <h3 class="text-2xl font-bold">${a.name}</h3>
+                        <p class="text-cyan-600 dark:text-cyan-400 font-mono text-sm">Status: ${a.status} | Uptime: ${a.uptime}</p>
+                      </div>
+                      <button onclick="this.closest('.fixed').remove()" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                      </button>
+                    </div>
+                    <div class="space-y-4">
+                      <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                        <p class="text-xs uppercase font-bold text-slate-500 mb-2">Description</p>
+                        <p class="${isDarkMode ? 'text-slate-300' : 'text-slate-700'}">${a.desc}</p>
+                      </div>
+                      <div class="grid grid-cols-2 gap-4">
+                        <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                          <p class="text-xs uppercase font-bold text-slate-500 mb-1">Current Load</p>
+                          <p class="text-2xl font-bold ${a.load > 80 ? 'text-red-500' : 'text-cyan-500'}">${a.load}%</p>
+                        </div>
+                        <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                          <p class="text-xs uppercase font-bold text-slate-500 mb-1">System Uptime</p>
+                          <p class="font-mono text-lg font-bold">${a.uptime}</p>
+                        </div>
+                      </div>
+                      <div class="${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4">
+                        <p class="text-xs uppercase font-bold text-slate-500 mb-2">Recent Activity</p>
+                        <div class="space-y-1 font-mono text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}">
+                          <p>• Processed ${Math.floor(Math.random() * 1000)} threats in last hour</p>
+                          <p>• ${Math.floor(Math.random() * 50)} decisions made</p>
+                          <p>• ${Math.floor(Math.random() * 10)} alerts triggered</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `;
+                modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+                document.body.appendChild(modal);
+              }}
+              className={`glass-card rounded-xl border transition-all duration-500 overflow-hidden flex flex-col group cursor-pointer ${isActing ? 'border-amber-500 scale-[0.98] opacity-80' : `${isDarkMode ? 'border-slate-800 hover:border-cyan-500/50' : 'border-slate-200 hover:border-cyan-200 shadow-sm'}`}`}>
               <div className={`p-5 border-b flex justify-between items-center ${isDarkMode ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-slate-50'}`}>
                 <h3 className="font-bold group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">{a.name}</h3>
                 {isActing ? (

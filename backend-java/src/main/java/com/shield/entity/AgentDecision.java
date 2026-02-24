@@ -13,13 +13,10 @@ public class AgentDecision {
     private Long id;
 
     private String agentName;
-    private String action;
-    private String reasoning;
+    private String decisionSummary;
+    private Double confidenceScore;
+    private Long linkedThreatId;
     private String status;
 
-    @ManyToOne
-    @JoinColumn(name = "threat_event_id")
-    private ThreatEvent threatEvent;
-
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now();
 }

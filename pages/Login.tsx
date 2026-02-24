@@ -1,18 +1,33 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../App';
+import { authAPI } from '../services/api';
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('admin123');
+  const [error, setError] = useState('');
   const { login } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      login('mock-jwt-token');
+    setError('');
+
+    try {
+      const data = await authAPI.login(username, password);
+      console.log('Login response:', data);
+      localStorage.setItem('shield_token', data.accessToken);
+      localStorage.setItem('shield_role', data.role || 'ADMIN');
+      localStorage.setItem('shield_username', username);
+      login(data.accessToken);
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(`Login failed: ${err.message || 'Backend not responding'}`);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -37,13 +52,19 @@ const Login: React.FC = () => {
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent"></div>
           
           <form onSubmit={handleLogin} className="space-y-6">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
             <div className="space-y-2">
               <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest px-1">Tactical ID</label>
               <div className="relative">
                 <i className="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
                 <input 
                   type="text" 
-                  defaultValue="Agent_Coulson"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl px-12 py-4 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
                   placeholder="Enter ID"
                 />
@@ -56,7 +77,8 @@ const Login: React.FC = () => {
                 <i className="fa-solid fa-key absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
                 <input 
                   type="password" 
-                  defaultValue="********"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl px-12 py-4 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
                   placeholder="Enter Passkey"
                 />
