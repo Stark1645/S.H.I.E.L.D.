@@ -29,32 +29,32 @@ const Dashboard: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
   });
 
   const [decisions, setDecisions] = useState<AgentDecision[]>([]);
-  const [trendData, setTrendData] = useState([
-    { time: '00:00', value: 34 },
-    { time: '04:00', value: 45 },
-    { time: '08:00', value: 28 },
-    { time: '12:00', value: 89 },
-    { time: '16:00', value: 65 },
-    { time: '20:00', value: 42 },
-    { time: '23:59', value: 55 },
-  ]);
+  const [trendData, setTrendData] = useState(() => {
+    const data = [];
+    for (let i = 0; i < 50; i++) {
+      data.push({ time: i, value: 50 + Math.sin(i * 0.2) * 20 });
+    }
+    return data;
+  });
 
   useEffect(() => {
     const updateTrend = setInterval(() => {
       setTrendData(prev => {
         const newData = [...prev.slice(1)];
         const lastValue = prev[prev.length - 1].value;
-        const newValue = Math.max(20, Math.min(100, lastValue + (Math.random() - 0.5) * 20));
-        const now = new Date();
+        const baseValue = stats.active > 0 ? stats.severity * 10 : 30;
+        const noise = (Math.random() - 0.5) * 15;
+        const newValue = Math.max(10, Math.min(100, baseValue + noise + Math.sin(Date.now() / 1000) * 10));
+        
         newData.push({
-          time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-          value: Math.round(newValue)
+          time: newData.length,
+          value: newValue
         });
         return newData;
       });
-    }, 3000);
+    }, 100);
     return () => clearInterval(updateTrend);
-  }, []);
+  }, [stats]);
 
   useEffect(() => {
     const updateNodes = setInterval(() => {
@@ -285,8 +285,8 @@ const Dashboard: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
                     <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="time" stroke={isDarkMode ? '#475569' : '#94a3b8'} fontSize={10} />
-                <YAxis stroke={isDarkMode ? '#475569' : '#94a3b8'} fontSize={10} />
+                <XAxis dataKey="time" stroke={isDarkMode ? '#475569' : '#94a3b8'} fontSize={10} hide />
+                <YAxis stroke={isDarkMode ? '#475569' : '#94a3b8'} fontSize={10} domain={[0, 100]} />
                 <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#1e293b' : '#f1f5f9'} vertical={false} />
                 <Tooltip 
                    contentStyle={{ 

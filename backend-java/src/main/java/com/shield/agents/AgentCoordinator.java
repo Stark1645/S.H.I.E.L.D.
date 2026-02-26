@@ -15,7 +15,6 @@ import java.util.List;
  * Enhanced Agent Coordinator with dynamic risk-based decision making
  */
 @Component
-@EnableScheduling
 @RequiredArgsConstructor
 @Slf4j
 public class AgentCoordinator {
@@ -28,23 +27,37 @@ public class AgentCoordinator {
     private final AnalyzerBetaAgent analyzerBetaAgent;
     private final WatcherAgent watcherAgent;
     private final OrchestratorAgent orchestratorAgent;
+    private final ResolverAgent resolverAgent;
 
     @Scheduled(fixedDelay = 30000)
     public void coordinateAgents() {
+        List<ThreatEvent> detectedThreats = threatService.getThreatsByStatus("DETECTED");
         List<ThreatEvent> activeThreats = threatService.getThreatsByStatus("ACTIVE");
+        List<ThreatEvent> containedThreats = threatService.getThreatsByStatus("CONTAINED");
         
-        if (activeThreats.isEmpty()) {
-            log.debug("No active threats found for agent coordination");
+        List<ThreatEvent> allThreats = new java.util.ArrayList<>();
+        allThreats.addAll(detectedThreats);
+        allThreats.addAll(activeThreats);
+        allThreats.addAll(containedThreats);
+        
+        if (allThreats.isEmpty()) {
+            log.debug("No threats found for agent coordination");
             return;
         }
         
         // Calculate dynamic threshold based on current threat landscape
         double dynamicThreshold = riskScoringService.calculateDynamicThreshold();
-        log.info("Agent coordination cycle started with {} active threats, dynamic threshold: {}", 
-                activeThreats.size(), dynamicThreshold);
+        log.info("Agent coordination cycle started with {} threats, dynamic threshold: {}", 
+                allThreats.size(), dynamicThreshold);
         
-        for (ThreatEvent threat : activeThreats) {
-            processThreadWithEnhancedLogic(threat, dynamicThreshold);
+        for (ThreatEvent threat : allThreats) {
+            if ("CONTAINED".equals(threat.getStatus())) {
+                if (resolverAgent.shouldResolve(threat)) {
+                    resolverAgent.resolve(threat);
+                }
+            } else {
+                processThreadWithEnhancedLogic(threat, dynamicThreshold);
+            }
         }
     }
     

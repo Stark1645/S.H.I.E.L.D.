@@ -17,6 +17,10 @@ public class AuthService {
     private final JwtUtil jwtUtil;
 
     public Map<String, String> login(String username, String password) {
+        if (username == null || password == null) {
+            throw new IllegalArgumentException("Username and password cannot be null");
+        }
+        
         try {
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Invalid credentials"));
@@ -36,9 +40,14 @@ public class AuthService {
     }
 
     public User register(String username, String password, String role) {
+        if (username == null || password == null) {
+            throw new IllegalArgumentException("Username and password cannot be null");
+        }
+        
         if (userRepository.findByUsername(username).isPresent()) {
             throw new RuntimeException("Username already exists");
         }
+        
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
@@ -47,9 +56,14 @@ public class AuthService {
     }
 
     public Map<String, String> refreshToken(String refreshToken) {
+        if (refreshToken == null) {
+            throw new IllegalArgumentException("Refresh token cannot be null");
+        }
+        
         if (!jwtUtil.validateToken(refreshToken)) {
             throw new RuntimeException("Invalid refresh token");
         }
+        
         String username = jwtUtil.extractUsername(refreshToken);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));

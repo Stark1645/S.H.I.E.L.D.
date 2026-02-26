@@ -2,7 +2,6 @@ package com.shield.controller;
 
 import com.shield.entity.ThreatEvent;
 import com.shield.service.ThreatService;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,7 +34,7 @@ public class ThreatController {
     public ResponseEntity<Map<String, Object>> getStats() {
         List<ThreatEvent> allThreats = threatService.getAllThreats();
         long activeThreats = allThreats.stream()
-            .filter(t -> "DETECTED".equals(t.getStatus()))
+            .filter(t -> "DETECTED".equals(t.getStatus()) || "ACTIVE".equals(t.getStatus()) || "CONTAINED".equals(t.getStatus()))
             .count();
         
         double avgSeverity = allThreats.stream()

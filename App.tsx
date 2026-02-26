@@ -6,6 +6,9 @@ import ThreatIntelligence from './pages/ThreatIntelligence';
 import SimulationControl from './pages/SimulationControl';
 import AgentMonitor from './pages/AgentMonitor';
 import ForensicLogs from './pages/ForensicLogs';
+import ThreatRemediation from './pages/ThreatRemediation';
+import AdvancedAnalytics from './pages/AdvancedAnalytics';
+import SystemHealth from './pages/SystemHealth';
 import Login from './pages/Login';
 
 // --- Contexts ---
@@ -47,12 +50,16 @@ const Layout: React.FC<{ children: React.ReactNode, isDarkMode: boolean, toggleD
   const { logout } = useAuth();
   const { notify } = useNotify();
   const location = useLocation();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const navItems = [
     { path: '/dashboard', label: 'War Room', icon: 'fa-shield-halved' },
     { path: '/intelligence', label: 'Intelligence', icon: 'fa-brain' },
+    { path: '/analytics', label: 'Analytics', icon: 'fa-chart-line' },
+    { path: '/remediation', label: 'Remediation', icon: 'fa-wand-magic-sparkles' },
     { path: '/simulation', label: 'Simulation', icon: 'fa-microchip' },
     { path: '/agents', label: 'Agents', icon: 'fa-robot' },
+    { path: '/health', label: 'System Health', icon: 'fa-heart-pulse' },
     { path: '/logs', label: 'Forensics', icon: 'fa-terminal' },
   ];
 
@@ -76,6 +83,23 @@ const Layout: React.FC<{ children: React.ReactNode, isDarkMode: boolean, toggleD
         </div>
 
         <div className="flex items-center space-x-6">
+          <div className="hidden md:flex items-center gap-4">
+            <div className={`px-3 py-1.5 rounded-lg border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+              <span className="text-xs text-slate-500 uppercase font-bold mr-2">Status:</span>
+              <span className="text-xs font-bold text-green-500 flex items-center gap-1">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                OPERATIONAL
+              </span>
+            </div>
+            <div className={`px-3 py-1.5 rounded-lg border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+              <span className="text-xs text-slate-500 uppercase font-bold mr-2">Agents:</span>
+              <span className="text-xs font-bold text-cyan-500">6 ACTIVE</span>
+            </div>
+            <div className={`px-3 py-1.5 rounded-lg border cursor-pointer hover:scale-105 transition-transform ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`} onClick={() => notify(`System Uptime: ${Math.floor(Math.random() * 100)}d ${Math.floor(Math.random() * 24)}h`)}>
+              <i className="fa-solid fa-clock text-xs text-slate-500 mr-2"></i>
+              <span className="text-xs font-bold">{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+          </div>
           <div 
             className="hidden md:flex items-center space-x-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full text-red-500 text-xs font-bold animate-pulse cursor-help"
             onClick={() => notify("Multiple breach attempts detected in Sector 7", "error")}
@@ -92,32 +116,48 @@ const Layout: React.FC<{ children: React.ReactNode, isDarkMode: boolean, toggleD
           </button>
           <button 
             onClick={handleTerminate}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all border ${isDarkMode ? 'bg-slate-800 hover:bg-red-600/20 hover:text-red-500 border-transparent hover:border-red-500/50' : 'bg-slate-200 hover:bg-red-50 text-slate-700 hover:text-red-600 border-slate-300 hover:border-red-200'}`}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all border flex items-center gap-2 ${isDarkMode ? 'bg-slate-800 hover:bg-red-600/20 hover:text-red-500 border-transparent hover:border-red-500/50' : 'bg-slate-200 hover:bg-red-50 text-slate-700 hover:text-red-600 border-slate-300 hover:border-red-200'}`}
           >
-            TERMINATE
+            <i className="fa-solid fa-power-off"></i>
+            <span className="hidden lg:inline">TERMINATE</span>
           </button>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex h-[calc(100vh-4rem)]">
         {/* Sidebar */}
-        <nav className={`w-64 border-r flex flex-col p-4 space-y-2 hidden lg:flex ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-white'}`}>
+        <nav className={`border-r flex flex-col p-4 space-y-2 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'} ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+          <div className="flex items-center justify-between mb-4">
+            {!sidebarCollapsed && <span className="text-xs font-bold text-cyan-500 uppercase tracking-wider">Command Center</span>}
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className={`p-2 rounded-lg ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-200'}`}
+              title={sidebarCollapsed ? 'Expand' : 'Collapse'}
+            >
+              <i className={`fa-solid ${sidebarCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'}`}></i>
+            </button>
+          </div>
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
+              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${sidebarCollapsed ? 'justify-center' : ''} ${
                 location.pathname === item.path 
                 ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.1)]' 
                 : `${isDarkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`
               }`}
+              title={sidebarCollapsed ? item.label : ''}
             >
               <i className={`fa-solid ${item.icon} w-5 text-center`}></i>
-              <span className="font-semibold text-sm">{item.label}</span>
+              {!sidebarCollapsed && <span className="font-semibold text-sm">{item.label}</span>}
+              {!sidebarCollapsed && location.pathname === item.path && (
+                <i className="fa-solid fa-chevron-right ml-auto text-xs"></i>
+              )}
             </Link>
           ))}
           
-          <div className={`mt-auto p-4 rounded-lg border ${isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-50 border-slate-200'}`}>
+          {!sidebarCollapsed && (
+            <div className={`mt-auto p-4 rounded-lg border ${isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-50 border-slate-200'}`}>
             <h3 className="text-[10px] font-mono text-slate-500 mb-2 uppercase tracking-widest">System Health</h3>
             <div className="space-y-2">
               <div className="flex justify-between items-center text-xs">
@@ -136,10 +176,11 @@ const Layout: React.FC<{ children: React.ReactNode, isDarkMode: boolean, toggleD
               </div>
             </div>
           </div>
+          )}
         </nav>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8">
           <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
             {children}
           </div>
@@ -231,8 +272,11 @@ const App: React.FC = () => {
                   <Routes>
                     <Route path="/dashboard" element={<Dashboard isDarkMode={isDarkMode} />} />
                     <Route path="/intelligence" element={<ThreatIntelligence isDarkMode={isDarkMode} />} />
+                    <Route path="/analytics" element={<AdvancedAnalytics isDarkMode={isDarkMode} />} />
+                    <Route path="/remediation" element={<ThreatRemediation isDarkMode={isDarkMode} />} />
                     <Route path="/simulation" element={<SimulationControl isDarkMode={isDarkMode} />} />
                     <Route path="/agents" element={<AgentMonitor isDarkMode={isDarkMode} />} />
+                    <Route path="/health" element={<SystemHealth isDarkMode={isDarkMode} />} />
                     <Route path="/logs" element={<ForensicLogs isDarkMode={isDarkMode} />} />
                     <Route path="/" element={<Navigate to="/dashboard" />} />
                   </Routes>

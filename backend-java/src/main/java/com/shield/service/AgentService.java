@@ -3,7 +3,6 @@ package com.shield.service;
 import com.shield.entity.AgentDecision;
 import com.shield.entity.ThreatEvent;
 import com.shield.repository.AgentDecisionRepository;
-import com.shield.service.RiskScoringService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,7 +30,17 @@ public class AgentService {
     }
 
     public AgentDecision executeAgentAction(Long threatId, String agentName, String action) {
+        if (threatId == null || agentName == null || action == null) {
+            throw new IllegalArgumentException("ThreatId, agentName, and action cannot be null");
+        }
+        
         ThreatEvent threat = threatService.getThreatById(threatId);
+        
+        // Update threat to ACTIVE when agents start processing
+        if ("DETECTED".equals(threat.getStatus())) {
+            threat.setStatus("ACTIVE");
+            threatService.updateThreat(threatId, threat);
+        }
         
         double finalRiskScore = riskScoringService.calculateFinalRiskScore(threat);
         double confidence = riskScoringService.calculateConfidence(
@@ -54,10 +63,19 @@ public class AgentService {
         
         AgentDecision savedDecision = decisionRepository.save(decision);
         
+        // Update threat to CONTAINED when remediation actions are taken
         if (action.contains("ISOLATE") || action.contains("BLOCK")) {
             threat.setStatus("CONTAINED");
             threatService.updateThreat(threatId, threat);
             log.info("Threat {} automatically CONTAINED by agent {}", threatId, agentName);
+        }
+        
+        // Update threat to RESOLVED when auto-resolved
+        if (action.contains("AUTO_RESOLVE")) {
+            threat.setStatus("RESOLVED");
+            threat.setResolvedAt(java.time.LocalDateTime.now());
+            threatService.updateThreat(threatId, threat);
+            log.info("Threat {} automatically RESOLVED by agent {}", threatId, agentName);
         }
         
         log.info("Agent action executed: agent={}, action={}, threatId={}, finalRiskScore={}", 

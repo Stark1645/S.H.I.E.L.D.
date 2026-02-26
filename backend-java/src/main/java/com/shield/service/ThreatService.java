@@ -3,7 +3,6 @@ package com.shield.service;
 import com.shield.entity.ThreatEvent;
 import com.shield.integration.MLServiceClient;
 import com.shield.repository.ThreatEventRepository;
-import com.shield.service.RiskScoringService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +17,7 @@ public class ThreatService {
     private final ThreatEventRepository threatRepository;
     private final MLServiceClient mlClient;
     private final RiskScoringService riskScoringService;
+    private final EmailService emailService;
 
     public List<ThreatEvent> getAllThreats() {
         return threatRepository.findAll();
@@ -29,17 +29,28 @@ public class ThreatService {
     }
 
     public ThreatEvent createThreat(ThreatEvent threat) {
-        threat.setStatus("ACTIVE");
+        if (threat == null) {
+            throw new IllegalArgumentException("Threat cannot be null");
+        }
+        
+        if (threat.getStatus() == null || threat.getStatus().isEmpty()) {
+            threat.setStatus("DETECTED");
+        }
+        if (threat.getTimestamp() == null) {
+            threat.setTimestamp(LocalDateTime.now());
+        }
         
         Map<String, Object> mlData = Map.of(
-            "threatType", threat.getThreatType(),
+            "threatType", threat.getThreatType() != null ? threat.getThreatType() : "UNKNOWN",
             "severityScore", threat.getSeverityScore() != null ? threat.getSeverityScore() : 5.0,
-            "sourceIP", threat.getSourceIP()
+            "sourceIP", threat.getSourceIP() != null ? threat.getSourceIP() : "0.0.0.0"
         );
         
         MLServiceClient.MLResponse mlResponse = mlClient.analyzeAnomaly(mlData);
-        threat.setPredictedEscalation(mlResponse.getPredictedEscalation());
-        threat.setRecommendedAction(mlResponse.getRecommendedAction());
+        if (mlResponse != null) {
+            threat.setPredictedEscalation(mlResponse.getPredictedEscalation());
+            threat.setRecommendedAction(mlResponse.getRecommendedAction());
+        }
         
         ThreatEvent savedThreat = threatRepository.save(threat);
         
@@ -49,12 +60,22 @@ public class ThreatService {
         log.info("Threat created: id={}, severityScore={}, finalRiskScore={}, attackChain={}", 
                 savedThreat.getId(), savedThreat.getSeverityScore(), finalRiskScore, attackChain);
         
+        // Send email notification
+        emailService.sendThreatAlert(savedThreat);
+        
         return savedThreat;
     }
 
     public ThreatEvent updateThreat(Long id, ThreatEvent updated) {
+        if (id == null || updated == null) {
+            throw new IllegalArgumentException("ID and updated threat cannot be null");
+        }
+        
         ThreatEvent threat = getThreatById(id);
-        threat.setStatus(updated.getStatus());
+        
+        if (updated.getStatus() != null) {
+            threat.setStatus(updated.getStatus());
+        }
         if (updated.getSeverityScore() != null) {
             threat.setSeverityScore(updated.getSeverityScore());
         }

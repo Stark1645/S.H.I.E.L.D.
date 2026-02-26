@@ -138,6 +138,29 @@ const ThreatIntelligence: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) =
                       <i className="fa-solid fa-shield-halved"></i>
                     </button>
                     <button 
+                      onClick={async () => {
+                        try {
+                          const token = localStorage.getItem('shield_token');
+                          await fetch(`http://localhost:8080/api/threats/${t.id}`, {
+                            method: 'PUT',
+                            headers: {
+                              'Authorization': `Bearer ${token}`,
+                              'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({...t, status: 'RESOLVED'})
+                          });
+                          notify(`Threat ${t.id} marked as RESOLVED`, 'success');
+                          setThreats(prev => prev.map(th => th.id === t.id ? {...th, status: 'RESOLVED'} : th));
+                        } catch (error) {
+                          notify('Failed to resolve threat', 'error');
+                        }
+                      }}
+                      className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 transition-transform hover:scale-125"
+                      title="Mark as Resolved"
+                    >
+                      <i className="fa-solid fa-check-circle"></i>
+                    </button>
+                    <button 
                       onClick={() => {
                         const modal = document.createElement('div');
                         modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm';

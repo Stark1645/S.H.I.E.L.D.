@@ -34,4 +34,11 @@ export const agentAPI = {
   getAgentStatus: () => apiFetch('/agents/status'),
 };
 
-export default { auth: authAPI, threats: threatAPI, agents: agentAPI };
+const api = {
+  get: (endpoint: string) => apiFetch(endpoint),
+  post: (endpoint: string, data: any) => apiFetch(endpoint, { method: 'POST', body: JSON.stringify(data) }),
+  put: (endpoint: string, data: any) => apiFetch(endpoint, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (endpoint: string) => apiFetch(endpoint, { method: 'DELETE' }),
+};
+
+export default api;

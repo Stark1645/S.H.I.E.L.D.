@@ -1,25 +1,41 @@
-# 🔌 S.H.I.E.L.D API Reference
+# S.H.I.E.L.D - API Reference
+## Complete REST API Documentation
 
-## Base URL
-```
-http://localhost:8080/api
-```
+**Base URL:** `http://localhost:8080/api`  
+**Authentication:** JWT Bearer Token (except /auth endpoints)
 
 ---
 
-## 🔐 Authentication Endpoints
+## Authentication Endpoints (Public)
 
-### Login
+### Register User
 ```http
-POST /auth/login
+POST /api/auth/register
 Content-Type: application/json
 
 {
-  "username": "admin",
-  "password": "admin123"
+  "username": "string",
+  "password": "string",
+  "role": "ADMIN|USER|DIRECTOR"
 }
 
-Response:
+Response 200:
+{
+  "message": "User registered successfully"
+}
+```
+
+### Login
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "username": "string",
+  "password": "string"
+}
+
+Response 200:
 {
   "accessToken": "eyJhbGc...",
   "refreshToken": "eyJhbGc...",
@@ -27,33 +43,16 @@ Response:
 }
 ```
 
-### Register
-```http
-POST /auth/register
-Content-Type: application/json
-
-{
-  "username": "newuser",
-  "password": "password123",
-  "role": "USER"
-}
-
-Response:
-{
-  "message": "User registered successfully"
-}
-```
-
 ### Refresh Token
 ```http
-POST /auth/refresh
+POST /api/auth/refresh
 Content-Type: application/json
 
 {
   "refreshToken": "eyJhbGc..."
 }
 
-Response:
+Response 200:
 {
   "accessToken": "eyJhbGc..."
 }
@@ -61,57 +60,62 @@ Response:
 
 ---
 
-## 🎯 Threat Endpoints
+## Threat Endpoints (Protected)
 
 ### Get All Threats
 ```http
-GET /threats
+GET /api/threats
 Authorization: Bearer {token}
 
-Response:
+Response 200:
 [
   {
     "id": 1,
+    "threatType": "DDoS / SYN Flood",
     "sourceIP": "104.18.23.45",
     "targetSystem": "API-Gateway-Primary",
-    "threatType": "DDoS / SYN Flood",
+    "status": "CONTAINED",
     "severityScore": 9.4,
     "intentClassification": "Resource Exhaustion",
-    "status": "CONTAINED",
-    "timestamp": "2025-01-15T10:30:00"
+    "description": "...",
+    "predictedEscalation": "HIGH",
+    "recommendedAction": "ISOLATE",
+    "timestamp": "2024-01-15T10:30:00",
+    "resolvedAt": null
   }
 ]
 ```
 
 ### Get Threat by ID
 ```http
-GET /threats/{id}
+GET /api/threats/{id}
 Authorization: Bearer {token}
 
-Response:
+Response 200:
 {
   "id": 1,
-  "sourceIP": "104.18.23.45",
+  "threatType": "SQL Injection",
   ...
 }
 ```
 
 ### Get Threats by Status
 ```http
-GET /threats/status/{status}
+GET /api/threats/status/{status}
 Authorization: Bearer {token}
 
-Status values: DETECTED, CONTAINED, RESOLVED, SIMULATED
+Status values: DETECTED, CONTAINED, RESOLVED, SIMULATED, ACTIVE
 
-Response: Array of threats
+Response 200:
+[...]
 ```
 
-### Get Dashboard Stats
+### Get Dashboard Statistics
 ```http
-GET /threats/stats
+GET /api/threats/stats
 Authorization: Bearer {token}
 
-Response:
+Response 200:
 {
   "total": 1248,
   "active": 14,
@@ -122,239 +126,339 @@ Response:
 
 ### Create Threat
 ```http
-POST /threats
+POST /api/threats
 Authorization: Bearer {token}
 Content-Type: application/json
 
 {
-  "sourceIP": "10.0.0.1",
-  "targetSystem": "Web-Server",
-  "threatType": "XSS Attack",
-  "severityScore": 7.5,
-  "intentClassification": "Code Injection",
-  "status": "DETECTED"
+  "threatType": "SQL Injection",
+  "sourceIP": "192.168.1.100",
+  "targetSystem": "User-DB-Master",
+  "severityScore": 8.5,
+  "intentClassification": "Data Exfiltration",
+  "description": "Suspicious SQL query detected"
 }
 
-Response: Created threat object
+Response 200:
+{
+  "id": 5,
+  "threatType": "SQL Injection",
+  "sourceIP": "192.168.1.100",
+  "targetSystem": "User-DB-Master",
+  "status": "ACTIVE",
+  "severityScore": 8.5,
+  "intentClassification": "Data Exfiltration",
+  "description": "Suspicious SQL query detected",
+  "predictedEscalation": "HIGH",
+  "recommendedAction": "ISOLATE",
+  "timestamp": "2024-01-15T10:35:00",
+  "resolvedAt": null
+}
+
+Note: ML analysis is automatically performed on creation
 ```
 
 ### Update Threat
 ```http
-PUT /threats/{id}
+PUT /api/threats/{id}
 Authorization: Bearer {token}
 Content-Type: application/json
 
 {
-  "status": "CONTAINED",
-  "severityScore": 8.0
+  "status": "RESOLVED",
+  "severityScore": 7.0
 }
 
-Response: Updated threat object
+Response 200:
+{
+  "id": 1,
+  "status": "RESOLVED",
+  "resolvedAt": "2024-01-15T11:00:00",
+  ...
+}
 ```
 
 ### Delete Threat
 ```http
-DELETE /threats/{id}
+DELETE /api/threats/{id}
 Authorization: Bearer {token}
 
-Response: 200 OK
+Response 200: OK
 ```
 
 ---
 
-## 🤖 Agent Endpoints
+## Agent Endpoints (Protected)
 
-### Get All Decisions
+### Get All Agent Decisions
 ```http
-GET /agents/decisions
+GET /api/agents/decisions
 Authorization: Bearer {token}
 
-Response:
+Response 200:
 [
   {
     "id": 1,
-    "agentName": "Sentinel-Alpha",
-    "decisionSummary": "Isolating System-04 due to anomalous outbound traffic.",
+    "agentName": "SENTINEL-ALPHA",
+    "decisionSummary": "ISOLATE_SYSTEM - Automated response: finalRiskScore=0.856, confidence=0.123, attackChain=ISOLATED_INCIDENT",
     "confidenceScore": 0.98,
     "linkedThreatId": 1,
-    "createdAt": "2025-01-15T10:30:00"
+    "status": "EXECUTED",
+    "createdAt": "2024-01-15T10:30:00"
   }
 ]
 ```
 
-### Get Decisions by Threat
+### Get Decisions by Threat ID
 ```http
-GET /agents/decisions/threat/{threatId}
+GET /api/agents/decisions/threat/{threatId}
 Authorization: Bearer {token}
 
-Response: Array of decisions for that threat
+Response 200:
+[...]
 ```
 
-### Get Decisions by Agent
+### Get Decisions by Agent Name
 ```http
-GET /agents/decisions/agent/{agentName}
+GET /api/agents/decisions/agent/{agentName}
 Authorization: Bearer {token}
 
-Response: Array of decisions by that agent
+Agent names: SENTINEL-ALPHA, DEFENDER-PRIME, RISK-EVALUATOR, 
+             ANALYZER-BETA, WATCHER, ORCHESTRATOR
+
+Response 200:
+[...]
 ```
 
-### Create Decision
+### Create Agent Decision
 ```http
-POST /agents/decisions
+POST /api/agents/decisions
 Authorization: Bearer {token}
 Content-Type: application/json
 
 {
-  "agentName": "Risk-Evaluator",
-  "decisionSummary": "Escalating threat level to HIGH",
-  "confidenceScore": 0.87,
-  "linkedThreatId": 2
+  "agentName": "SENTINEL-ALPHA",
+  "decisionSummary": "Isolated system due to critical threat",
+  "confidenceScore": 0.95,
+  "linkedThreatId": 1,
+  "status": "EXECUTED"
 }
 
-Response: Created decision object
+Response 200:
+{
+  "id": 4,
+  "agentName": "SENTINEL-ALPHA",
+  ...
+}
 ```
 
 ### Execute Agent Action
 ```http
-POST /agents/execute
+POST /api/agents/execute
 Authorization: Bearer {token}
 Content-Type: application/json
 
 {
   "threatId": 1,
-  "agentName": "Sentinel-Alpha",
+  "agentName": "SENTINEL-ALPHA",
   "action": "ISOLATE_SYSTEM"
 }
 
-Response: Created decision object
+Response 200:
+{
+  "id": 5,
+  "agentName": "SENTINEL-ALPHA",
+  "decisionSummary": "ISOLATE_SYSTEM - Automated response: finalRiskScore=0.856, confidence=0.123, attackChain=ISOLATED_INCIDENT",
+  "confidenceScore": 0.98,
+  "linkedThreatId": 1,
+  "status": "EXECUTED",
+  "createdAt": "2024-01-15T10:35:00"
+}
+
+Note: If action contains "ISOLATE" or "BLOCK", threat status is automatically updated to "CONTAINED"
 ```
 
 ---
 
-## 📊 Response Codes
+## ML Service Endpoints (Internal)
 
-| Code | Meaning |
-|------|---------|
-| 200 | Success |
-| 201 | Created |
-| 400 | Bad Request |
-| 401 | Unauthorized (invalid/missing token) |
-| 403 | Forbidden |
-| 404 | Not Found |
-| 500 | Internal Server Error |
+### Service Info
+```http
+GET http://localhost:8000/
+
+Response 200:
+{
+  "service": "S.H.I.E.L.D ML Service",
+  "version": "1.0.0",
+  "status": "operational"
+}
+```
+
+### Health Check
+```http
+GET http://localhost:8000/health
+
+Response 200:
+{
+  "status": "healthy"
+}
+```
+
+### Analyze Threat
+```http
+POST http://localhost:8000/analyze
+Content-Type: application/json
+
+{
+  "threatType": "SQL Injection",
+  "severityScore": 8.5,
+  "sourceIP": "192.168.1.100"
+}
+
+Response 200:
+{
+  "anomalyScore": 0.82,
+  "predictedEscalation": "HIGH",
+  "recommendedAction": "ISOLATE"
+}
+
+Escalation levels: LOW, MEDIUM, HIGH, CRITICAL
+Recommended actions: MONITOR, ISOLATE, BLOCK, ESCALATE
+```
 
 ---
 
-## 🔑 Authentication Flow
+## Error Responses
 
-1. **Login** → Get `accessToken` and `refreshToken`
-2. **Store** → Save `accessToken` in localStorage
-3. **Use** → Include in Authorization header: `Bearer {accessToken}`
-4. **Refresh** → When token expires, use `refreshToken` to get new `accessToken`
+### 400 Bad Request
+```json
+{
+  "error": "Invalid request",
+  "message": "Threat cannot be null"
+}
+```
+
+### 401 Unauthorized
+```json
+{
+  "error": "Unauthorized",
+  "message": "Invalid or expired token"
+}
+```
+
+### 404 Not Found
+```json
+{
+  "error": "Not Found",
+  "message": "Threat not found"
+}
+```
+
+### 500 Internal Server Error
+```json
+{
+  "error": "Internal Server Error",
+  "message": "An unexpected error occurred"
+}
+```
 
 ---
 
-## 🧪 Testing with cURL
+## Authentication Flow
 
-### Login
+1. **Register** (optional if using default admin user)
+   ```
+   POST /api/auth/register
+   ```
+
+2. **Login** to get tokens
+   ```
+   POST /api/auth/login
+   → Returns accessToken + refreshToken
+   ```
+
+3. **Use Access Token** for all protected endpoints
+   ```
+   Header: Authorization: Bearer {accessToken}
+   ```
+
+4. **Refresh Token** when access token expires (24h)
+   ```
+   POST /api/auth/refresh
+   Body: { refreshToken }
+   → Returns new accessToken
+   ```
+
+---
+
+## Rate Limits
+
+Currently no rate limits implemented. Recommended for production:
+- Authentication: 5 requests/minute
+- Threats: 100 requests/minute
+- Agents: 50 requests/minute
+
+---
+
+## CORS Configuration
+
+Allowed origins:
+- http://localhost:3000
+- http://localhost:5173
+- http://localhost:3001
+
+---
+
+## Testing with cURL
+
+### Login and Get Token
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"username":"admin","password":"admin123"}' \
+  | jq -r '.accessToken')
 ```
 
-### Get Threats (with token)
+### Get All Threats
 ```bash
-curl -X GET http://localhost:8080/api/threats \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+curl http://localhost:8080/api/threats \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Create Threat
 ```bash
 curl -X POST http://localhost:8080/api/threats \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "sourceIP": "10.0.0.1",
-    "targetSystem": "Web-Server",
-    "threatType": "XSS Attack",
-    "severityScore": 7.5,
-    "intentClassification": "Code Injection",
-    "status": "DETECTED"
+    "threatType": "DDoS",
+    "sourceIP": "1.2.3.4",
+    "targetSystem": "API-Gateway",
+    "severityScore": 9.0,
+    "intentClassification": "Service Disruption",
+    "description": "Large-scale DDoS attack detected"
   }'
 ```
 
 ---
 
-## 🔍 Frontend API Usage
+## Swagger UI
 
-The frontend uses the API service layer in `services/api.ts`:
+Interactive API documentation available at:
+**http://localhost:8080/swagger-ui.html**
 
-```typescript
-import { authAPI, threatAPI, agentAPI } from './services/api';
-
-// Login
-const data = await authAPI.login('admin', 'admin123');
-localStorage.setItem('shield_token', data.accessToken);
-
-// Get threats
-const threats = await threatAPI.getAll();
-
-// Get stats
-const stats = await threatAPI.getStats();
-
-// Get agent decisions
-const decisions = await agentAPI.getAllDecisions();
-
-// Execute action
-await agentAPI.executeAction(1, 'Sentinel-Alpha', 'ISOLATE');
-```
+OpenAPI specification:
+**http://localhost:8080/api-docs**
 
 ---
 
-## 🛡️ Security Notes
+## WebSocket Support
 
-1. **Always use HTTPS in production**
-2. **Tokens expire** - accessToken: 1 hour, refreshToken: 24 hours
-3. **Store tokens securely** - Use httpOnly cookies in production
-4. **Validate all inputs** - Backend validates all requests
-5. **CORS is configured** - Only allowed origins can access API
-
----
-
-## 📝 Sample Data
-
-Default data created on first run:
-
-**User:**
-- Username: `admin`
-- Password: `admin123`
-- Role: `ADMIN`
-
-**Threats:** 4 sample threats (DDoS, SQL Injection, Reverse Shell, Credential Stuffing)
-
-**Decisions:** 3 sample agent decisions
+Currently not implemented. Planned for Phase 2:
+- Real-time threat updates
+- Live agent decision feed
+- System status notifications
 
 ---
 
-## 🚀 Quick Start
-
-1. Start backend: `mvn spring-boot:run`
-2. Get token: Login via frontend or cURL
-3. Use token: Include in Authorization header
-4. Make requests: Use any HTTP client
-
----
-
-## 📚 Swagger Documentation
-
-Interactive API docs available at:
-```
-http://localhost:8080/swagger-ui.html
-```
-
-Test all endpoints directly from the browser!
-
----
-
-**Happy Coding! 🛡️**
+**For more information, see [FEATURE_REPORT.md](FEATURE_REPORT.md)**

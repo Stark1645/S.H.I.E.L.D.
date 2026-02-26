@@ -1,279 +1,407 @@
-# 🛡️ S.H.I.E.L.D User Guide - What Everything Does
+# S.H.I.E.L.D - Complete User Guide
 
-## 📊 Dashboard (War Room)
+## 🚀 Getting Started
 
-**Purpose:** Real-time overview of your entire cybersecurity posture
-
-### What You See:
-1. **Metrics Cards**
-   - **Total Events**: All security events ever recorded
-   - **Active Threats**: Threats currently being investigated (status: DETECTED)
-   - **Avg Severity**: Average threat severity score (0-10 scale)
-   - **Containment Rate**: % of threats successfully contained or resolved
-
-2. **System Integrity Map** (Grid of Nodes)
-   - Each square = a system/server in your network
-   - **Green**: Healthy systems
-   - **Yellow**: Warning - suspicious activity
-   - **Red (pulsing)**: Critical - under attack
-   - **Click any node** to see details and isolate it
-
-3. **Threat Vectors** (Pie Chart)
-   - Shows distribution of threat types
-   - DDoS, SQL Injection, Phishing, Malware
-   - Click segments to filter
-
-4. **Escalation Probability** (Line Chart)
-   - Predicts how threats might escalate over 24 hours
-   - Helps you prepare resources
-
-5. **Agent Decision Feed**
-   - Shows what autonomous agents are doing
-   - Real-time decisions from AI agents
-   - Auto-refreshes every 10 seconds
-
----
-
-## 🎯 Threat Intelligence
-
-**Purpose:** Detailed analysis of all security threats
-
-### What You See:
-- **Threat Table** with:
-  - **Threat ID**: Unique identifier (e.g., TR-902)
-  - **Source IP**: Where the attack came from
-  - **Target System**: What system is being attacked
-  - **Type**: Attack method (DDoS, SQL Injection, etc.)
-  - **Severity**: 0-10 scale (higher = more dangerous)
-  - **Status**: 
-    - DETECTED (red) = Just found, needs action
-    - CONTAINED (green) = Blocked successfully
-    - RESOLVED (gray) = Fully handled
-    - SIMULATED (blue) = Test/training scenario
-
-### What You Can Do:
-- **Search/Filter**: Find specific threats
-- **Trace Origin**: Click crosshair icon to investigate source
-- **View Evidence**: Click magnifying glass for forensic data
-- **Generate Report**: Export threat analysis
-- Auto-refreshes every 15 seconds
-
----
-
-## 🤖 Agent Monitor (Multi-Agent Hive)
-
-**Purpose:** Monitor autonomous AI agents that defend your systems
-
-### What Agents Do:
-
-1. **MonitoringAgent**
-   - Watches all network traffic
-   - Ingests raw telemetry data
-   - First line of defense
-
-2. **RiskIntentAgent**
-   - Analyzes attacker intentions
-   - Uses heuristics to predict next moves
-   - Calculates risk scores
-
-3. **PredictiveSimAgent**
-   - Runs "what-if" scenarios
-   - Simulates future attack paths
-   - Helps plan defenses
-
-4. **HeadOrchestrator**
-   - Master decision maker
-   - Coordinates all other agents
-   - Selects best defense strategy
-
-5. **DefenseDeception**
-   - Deploys honeypots (fake systems)
-   - Tricks attackers into revealing themselves
-   - Gathers intelligence
-
-6. **TrafficScrubber**
-   - Filters malicious traffic in real-time
-   - Blocks bad packets
-   - Cleans data streams
-
-### What You Can Do:
-- **View Agent Status**: Healthy, Degraded, or Engaged
-- **Check Load**: See how busy each agent is
-- **Reboot Agent**: Restart if needed
-- **Reconfigure**: Adjust agent settings
-- **View RPC Logs**: See agents communicating with each other
-
-### RPC Communication Logs:
-Shows agents talking to each other:
-- Agent A asks Agent B to do something
-- Agent B responds with results
-- Real-time coordination happening automatically
-
----
-
-## 🔬 Forensic Logs
-
-**Purpose:** Deep dive into security events for investigation
-
-### What It Does:
-- **System Logs**: All system events
-- **Security Logs**: Security-specific events
-- **Agent Logs**: What agents did and why
-- **Error Logs**: Problems and failures
-
-### Use Cases:
-- **Post-Incident Analysis**: What happened after an attack?
-- **Compliance**: Prove you followed security procedures
-- **Debugging**: Find why something went wrong
-- **Audit Trail**: Complete history of all actions
-
-### Features:
-- Filter by log type
-- Search by keyword
-- Export logs for analysis
-- Timestamp tracking
-
----
-
-## 🎮 Simulation Control
-
-**Purpose:** Test your defenses without real attacks
-
-### What It Does:
-- **Run Attack Simulations**: Test how your system handles threats
-- **Scenario Testing**: Try different attack patterns
-- **Training**: Practice incident response
-- **Validation**: Verify defenses work
-
-### Use Cases:
-- Test new security rules
-- Train security team
-- Validate incident response plans
-- Find weaknesses before attackers do
-
----
-
-## 🔄 How Everything Works Together
-
+### 1. Start the System
+```bash
+start-shield-complete.bat
 ```
-1. MonitoringAgent detects suspicious traffic
-   ↓
-2. RiskIntentAgent analyzes the threat
-   ↓
-3. PredictiveSimAgent simulates possible outcomes
-   ↓
-4. HeadOrchestrator decides best response
-   ↓
-5. DefenseDeception deploys honeypot
-   ↓
-6. TrafficScrubber blocks malicious traffic
-   ↓
-7. All actions logged in Forensic Logs
-   ↓
-8. Dashboard updates with new stats
-   ↓
-9. Threat Intelligence shows threat details
+**What happens:** Starts ML Service, Backend, and Frontend automatically.
+
+### 2. Login
+- Open: http://localhost:5173
+- Username: `admin`
+- Password: `admin123`
+- Click **Login**
+
+**What happens:** JWT token generated, redirected to Dashboard.
+
+---
+
+## 📊 Dashboard Page
+
+### What You See
+- **4 Metric Cards** (Total Events, Active Threats, Avg Severity, Containment Rate)
+- **50-Node System Map** (interactive grid)
+- **Threat Vectors Pie Chart** (DDoS, SQLi, Phishing, Malware)
+- **Escalation Probability Graph** (24h trend)
+- **Agent Decision Feed** (last 5 decisions)
+
+### What You Can Do
+
+**Click Metric Card:**
+- Shows notification with metric details
+- No data changes
+
+**Click Node in System Map:**
+- Opens modal with node details
+- Shows status, traffic load, packet trace
+- **ISOLATE NODE button:** Marks node as critical (red)
+- **RESTORE NODE button:** Marks node as healthy (green)
+
+**Click Agent Decision:**
+- Opens modal with full decision details
+- Shows confidence score, timestamp, reasoning
+- Read-only view
+
+**Auto-Refresh:** Every 10 seconds
+
+---
+
+## 🛡️ Threat Intelligence Page
+
+### What You See
+- **Search Bar** (filter by ID, IP, type, system)
+- **Generate Report Button**
+- **Threat Table** (all threats with details)
+
+### What You Can Do
+
+**Search Threats:**
+- Type in search bar
+- Filters table in real-time
+- Searches: ID, Source IP, Threat Type, Target System
+
+**Generate Report:**
+- Click **Generate Report** button
+- Shows "Compiling report..." notification
+- After 2s: "Report saved to Secure Vault"
+- No actual file created (demo feature)
+
+**Click Threat ID:**
+- Shows notification: "Opening detailed log for [ID]"
+- No modal opens
+
+**Click Shield Icon (🛡️):**
+- Marks threat as **CONTAINED**
+- Updates status immediately
+- Shows success notification
+- Threat status changes in table
+
+**Click Checkmark Icon (✓):**
+- Marks threat as **RESOLVED**
+- Updates status immediately
+- Shows success notification
+- Threat status changes in table
+
+**Click Crosshairs Icon (🎯):**
+- Opens **IP Trace Modal**
+- Shows geolocation, ISP, reputation
+- Click X or outside to close
+
+**Click Magnifying Glass Icon (🔍):**
+- Opens **Forensic Evidence Modal**
+- Shows all threat details
+- Click X or outside to close
+
+**Auto-Refresh:** Every 15 seconds
+
+---
+
+## 🤖 Agent Monitor Page
+
+### What You See
+- **6 Agent Cards** (status, load, uptime, description)
+- **Recent Agent Decisions Log** (live feed)
+
+### What You Can Do
+
+**Click Agent Card:**
+- Opens **Agent Details Modal**
+- Shows description, load, uptime, recent activity
+- Click X or outside to close
+
+**Click REBOOT Button:**
+- Shows "REBOOT sequence initiated" notification
+- Agent card shows "PROCESSING" for 2.5s
+- Then shows "Agent rebooted and synchronized"
+- No actual reboot happens
+
+**Click RECONFIGURE Button:**
+- Shows "RECONFIGURE sequence initiated" notification
+- Agent card shows "PROCESSING" for 2.5s
+- Then shows "Agent reconfigured and synchronized"
+- No actual reconfiguration happens
+
+**Click Decision in Log:**
+- Shows notification with decision summary
+- No modal opens
+
+**Auto-Refresh:** Every 10 seconds
+
+---
+
+## 📈 Advanced Analytics Page
+
+### What You See
+- **AI Threat Prediction Card** (next threat, probability, severity)
+- **Attack Pattern Detection** (coordinated attacks)
+- **Threat Frequency Radar Chart**
+- **Global Threat Distribution** (by country)
+- **Attack Chain Analysis** (velocity, multi-stage)
+- **Recent Threat Timeline**
+
+### What You Can Do
+
+**Click Refresh Button:**
+- Manually refreshes all analytics
+- Shows "Analytics refreshed" notification
+- Fetches latest data from backend
+
+**Click Country Card:**
+- Shows notification: "[Country]: [X] threats detected"
+- No modal opens
+
+**Click Timeline Item:**
+- Shows notification with threat details
+- No modal opens
+
+**Auto-Refresh:** Every 15 seconds
+
+---
+
+## 💓 System Health Page
+
+### What You See
+- **4 Metric Cards** (CPU Load, Memory Usage, Uptime, Threads)
+- **Memory Allocation Details** (used, free, total, max)
+- **Memory Usage Bar** (visual percentage)
+- **CPU & Memory Trends Chart**
+- **Response Time Chart**
+- **System Information** (cores, uptime, last check)
+
+### What You Can Do
+
+**Click Refresh Button:**
+- Manually refreshes health metrics
+- Shows "Health metrics refreshed" notification
+- Fetches latest data from backend
+
+**View Charts:**
+- Hover over chart points to see values
+- Charts update automatically
+- Read-only visualization
+
+**Auto-Refresh:** Every 5 seconds
+
+---
+
+## 🎯 Common Actions
+
+### Create a Threat (Manual)
+```bash
+# Use threat injection script
+create-threats.bat
+# OR
+inject-threats.bat
+```
+**What happens:**
+1. Threat created with status: DETECTED
+2. Appears in Dashboard, Threat Intelligence, and Threat Remediation
+3. Within 30s: Agents respond, status → ACTIVE
+4. Within 60s: High-risk threats → CONTAINED
+5. After 5 min: Auto-resolved → RESOLVED
+
+### View Threat Remediation (Real-Time)
+1. Go to **Threat Remediation** page
+2. See all DETECTED, ACTIVE, and CONTAINED threats
+3. Watch progress bars as agents work
+4. See 5-step remediation process
+5. Threats disappear when RESOLVED
+
+### Contain a Threat (Manual)
+1. Go to **Threat Intelligence**
+2. Find threat in table
+3. Click **Shield Icon (🛡️)**
+4. Status changes to CONTAINED
+5. Shows success notification
+
+### Resolve a Threat (Manual)
+1. Go to **Threat Intelligence**
+2. Find threat in table
+3. Click **Checkmark Icon (✓)**
+4. Status changes to RESOLVED
+5. Shows success notification
+6. `resolvedAt` timestamp set
+
+### View Threat Details
+1. Go to **Threat Intelligence**
+2. Click **Magnifying Glass Icon (🔍)** on any threat
+3. Modal opens with:
+   - Source IP
+   - Target System
+   - Threat Type
+   - Intent Classification
+   - Severity Score
+   - Status
+4. Click X or outside to close
+
+### View Agent Decision Details
+1. Go to **Dashboard** or **Agent Monitor**
+2. Click any decision in the feed
+3. Modal opens with:
+   - Agent Name
+   - Decision Summary
+   - Confidence Score
+   - Timestamp
+4. Click X or outside to close
+
+---
+
+## 🔄 Automatic Behaviors
+
+### Threat Lifecycle (No User Action Needed)
+```
+DETECTED (0s)
+    ↓ Agent Coordinator runs every 30s
+ACTIVE (30s)
+    ↓ Agents evaluate and respond
+CONTAINED (60s)
+    ↓ RESOLVER agent checks every 30s
+RESOLVED (5 min)
 ```
 
----
+### Agent Responses (Automatic)
 
-## 🎯 Real-World Example
+**High Risk Threats (severity > 7):**
+- SENTINEL-ALPHA: Isolates system
+- DEFENDER-PRIME: Blocks IP
+- Status → CONTAINED
 
-**Scenario: SQL Injection Attack Detected**
+**Medium Risk Threats (severity 4-7):**
+- RISK-EVALUATOR: Increases surveillance
+- ANALYZER-BETA: Deep inspection
+- Status → ACTIVE
 
-1. **MonitoringAgent** sees unusual database queries
-2. **RiskIntentAgent** identifies it as SQL injection attempt
-3. **PredictiveSimAgent** predicts attacker wants to steal data
-4. **HeadOrchestrator** decides to:
-   - Block the IP address
-   - Deploy honeypot database
-   - Alert security team
-5. **DefenseDeception** creates fake database to trap attacker
-6. **TrafficScrubber** blocks all traffic from that IP
-7. **Dashboard** shows:
-   - Active Threats: +1
-   - Severity: 8.7
-   - Status: CONTAINED
-8. **Threat Intelligence** displays full details
-9. **Forensic Logs** records everything for investigation
+**Low Risk Threats (severity < 4):**
+- WATCHER: Logs activity
+- Status → ACTIVE
 
----
+**Attack Campaign Detected:**
+- ORCHESTRATOR: Deploys honeypots
+- Additional decision logged
 
-## 📈 Key Metrics Explained
+**After 5 Minutes (CONTAINED threats):**
+- RESOLVER: Auto-resolves
+- Status → RESOLVED
+- `resolvedAt` timestamp set
 
-### Severity Score (0-10)
-- **0-3**: Low - Minor issues, monitor
-- **4-6**: Medium - Investigate soon
-- **7-8**: High - Take action now
-- **9-10**: Critical - Emergency response
-
-### Containment Rate
-- **90%+**: Excellent - Most threats stopped
-- **70-89%**: Good - Room for improvement
-- **<70%**: Needs attention - Review defenses
-
-### Agent Load
-- **0-50%**: Normal operation
-- **51-80%**: Busy but handling it
-- **81-100%**: Overloaded - may need more resources
+### Real-Time Updates (Automatic)
+- Dashboard metrics update every 10s
+- Threat table updates every 15s
+- Agent decisions update every 10s
+- Analytics update every 15s
+- System health updates every 5s
 
 ---
 
-## 🚀 Best Practices
+## 🎨 UI Elements Explained
 
-1. **Check Dashboard Daily**: Quick health check
-2. **Review Threat Intelligence**: Understand attack patterns
-3. **Monitor Agent Status**: Ensure agents are healthy
-4. **Analyze Forensic Logs**: Learn from incidents
-5. **Run Simulations**: Test defenses regularly
+### Status Colors
+- **🔴 Red (DETECTED):** New threat, not yet handled
+- **🟡 Yellow (ACTIVE):** Agents are responding
+- **🟢 Green (CONTAINED):** Threat stopped and isolated
+- **⚪ Gray (RESOLVED):** Fully cleaned up and verified
 
----
+### Node Colors (System Map)
+- **Green:** Healthy node
+- **Yellow:** Warning state
+- **Red (pulsing):** Critical state
 
-## 🆘 When to Take Action
-
-### Immediate Action Required:
-- Active Threats > 10
-- Severity Score > 9
-- Agent showing "Degraded" status
-- Containment Rate < 70%
-
-### Investigate Soon:
-- New threat patterns
-- Unusual source IPs
-- Agent load > 80%
-- Multiple threats from same source
-
-### Monitor:
-- Low severity threats
-- Resolved threats (for patterns)
-- Agent communication logs
-- System performance
+### Severity Indicators
+- **Red (9-10):** Critical severity
+- **Orange (7-8):** High severity
+- **Yellow (4-6):** Medium severity
+- **Green (1-3):** Low severity
 
 ---
 
-## 🎓 Understanding Auto-Refresh
+## 📱 Navigation
 
-- **Dashboard**: Updates every 10 seconds
-  - Fresh statistics
-  - Latest agent decisions
-  
-- **Threat Intelligence**: Updates every 15 seconds
-  - New threats appear automatically
-  - Status changes reflected
+### Top Menu
+- **Dashboard:** Overview and metrics
+- **Threat Intelligence:** All threats table
+- **Threat Remediation:** Live remediation progress
+- **Agent Monitor:** Agent status and decisions
+- **Advanced Analytics:** AI predictions and patterns
+- **System Health:** Performance monitoring
 
-- **No Flickering**: Data updates smoothly in background
-- **Real-time**: Always see current state
-
----
-
-## 💡 Pro Tips
-
-1. **Click Everything**: Most elements are interactive
-2. **Watch Agent Feed**: See AI making decisions in real-time
-3. **Use Search**: Quickly find specific threats
-4. **Check RPC Logs**: Understand agent coordination
-5. **Generate Reports**: Document incidents for compliance
+### User Menu (Top Right)
+- **Dark Mode Toggle:** Switch between light/dark theme
+- **Logout:** End session and return to login
 
 ---
 
-**Your S.H.I.E.L.D system is now fully operational and protecting your infrastructure! 🛡️**
+## ⚡ Quick Tips
+
+1. **Watch the Dashboard** - See threats appear and agents respond in real-time
+2. **Use Search** - Filter threats quickly in Threat Intelligence
+3. **Check Analytics** - See AI predictions for next threats
+4. **Monitor Health** - Ensure system performance is good
+5. **Let Agents Work** - Most threats are handled automatically
+6. **Manual Override** - Use contain/resolve buttons when needed
+
+---
+
+## 🆘 Troubleshooting
+
+**No data showing:**
+- Wait 10-15 seconds for auto-refresh
+- Click Refresh button manually
+- Check backend is running (http://localhost:8080)
+
+**Agents not responding:**
+- Wait 30 seconds (agent cycle time)
+- Check backend logs for errors
+- Verify threats have severity > 4
+
+**Can't login:**
+- Verify credentials: admin/admin123
+- Check backend is running
+- Clear browser cache
+
+**Charts not loading:**
+- Wait for data to populate
+- Refresh the page
+- Check browser console for errors
+
+---
+
+## 📊 What Each Feature Does
+
+### Dashboard
+**Purpose:** Real-time overview of system status  
+**Updates:** Every 10 seconds  
+**Key Info:** Metrics (Total, Active, Severity, Containment), system map, agent activity  
+**Active Threats:** Shows DETECTED + ACTIVE + CONTAINED threats
+
+### Threat Intelligence
+**Purpose:** Manage and investigate threats  
+**Updates:** Every 15 seconds  
+**Key Actions:** Search, contain, resolve, view details
+
+### Threat Remediation
+**Purpose:** Watch live remediation progress  
+**Updates:** Every 3 seconds  
+**Shows:** DETECTED, ACTIVE, and CONTAINED threats with progress bars  
+**Key Info:** 5-step remediation process, agent assignments, completion status
+
+### Agent Monitor
+**Purpose:** Monitor autonomous agent activity  
+**Updates:** Every 10 seconds  
+**Key Info:** Agent status, decisions, health
+
+### Advanced Analytics
+**Purpose:** AI-powered threat analysis  
+**Updates:** Every 15 seconds  
+**Key Info:** Predictions, patterns, geolocation
+
+### System Health
+**Purpose:** Monitor system performance  
+**Updates:** Every 5 seconds  
+**Key Info:** CPU, memory, response time
+
+---
+
+**Version:** 2.0 FINAL  
+**Status:** Production Ready

@@ -1,10 +1,27 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNotify } from '../App';
+import { agentAPI } from '../services/api';
+import { AgentDecision } from '../types';
 
 const AgentMonitor: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
   const { notify } = useNotify();
   const [actingAgents, setActingAgents] = useState<Set<string>>(new Set());
+  const [decisions, setDecisions] = useState<AgentDecision[]>([]);
+
+  useEffect(() => {
+    const fetchDecisions = async () => {
+      try {
+        const data = await agentAPI.getAllDecisions();
+        setDecisions(data.slice(0, 10));
+      } catch (error) {
+        console.error('Failed to fetch agent decisions:', error);
+      }
+    };
+    fetchDecisions();
+    const interval = setInterval(fetchDecisions, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const agents = [
     { name: 'MonitoringAgent', status: 'Healthy', load: 12, uptime: '142d 4h', desc: 'Ingesting raw telemetry' },
@@ -143,32 +160,18 @@ const AgentMonitor: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
 
       <div className={`glass-card rounded-xl border p-6 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold">Inter-Agent Communication (RPC Logs)</h3>
-            <button onClick={() => notify("RPC stream paused for manual review", "warning")} className={`text-[10px] font-bold px-3 py-1 rounded transition-colors ${isDarkMode ? 'text-slate-400 bg-slate-800 hover:bg-slate-700' : 'text-slate-600 bg-slate-100 hover:bg-slate-200'}`}>
-              PAUSE STREAM
-            </button>
+            <h3 className="font-bold">Recent Agent Decisions (Live)</h3>
+            <span className={`text-[10px] font-mono px-2 py-1 rounded ${isDarkMode ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-600'}`}>AUTO-REFRESH 10s</span>
          </div>
          <div className={`rounded-xl border p-4 font-mono text-[11px] h-48 overflow-y-auto space-y-2 shadow-inner ${isDarkMode ? 'bg-slate-950 border-slate-800 text-green-500/80' : 'bg-slate-100 border-slate-200 text-slate-700'}`}>
-            <div className={`flex gap-4 border-b pb-2 hover:bg-black/5 transition-colors cursor-pointer ${isDarkMode ? 'border-slate-800/50' : 'border-slate-200'}`} onClick={() => notify("Trace details for TR-902-A encrypted")}>
-              <span className="text-slate-500 shrink-0 font-bold">[12:04:12]</span>
-              <span>CALL <span className="text-cyan-600 dark:text-cyan-400 font-bold">[RiskIntentAgent]</span> -&gt; <span className="text-amber-600 dark:text-amber-500 font-bold">[HeadOrchestrator]</span> Payload: <code className={`px-1 rounded ${isDarkMode ? 'bg-slate-900' : 'bg-slate-200 text-slate-900 font-bold'}`}>{"{ threatId: 'TR-902', severity: 9.2 }"}</code></span>
-            </div>
-            <div className={`flex gap-4 border-b pb-2 hover:bg-black/5 transition-colors cursor-pointer ${isDarkMode ? 'border-slate-800/50' : 'border-slate-200'}`}>
-              <span className="text-slate-500 shrink-0 font-bold">[12:04:13]</span>
-              <span>RESP <span className="text-amber-600 dark:text-amber-500 font-bold">[HeadOrchestrator]</span> <span className="text-green-600 dark:text-green-500 font-bold">OK</span>: Ack Strategy 'ISOLATION_V4'</span>
-            </div>
-            <div className={`flex gap-4 border-b pb-2 hover:bg-black/5 transition-colors cursor-pointer ${isDarkMode ? 'border-slate-800/50' : 'border-slate-200'}`}>
-              <span className="text-slate-500 shrink-0 font-bold">[12:04:15]</span>
-              <span>CALL <span className="text-amber-600 dark:text-amber-500 font-bold">[HeadOrchestrator]</span> -&gt; <span className="text-cyan-600 dark:text-cyan-400 font-bold">[DefenseDeception]</span> Trigger: Deploy Honeypot-B</span>
-            </div>
-            <div className={`flex gap-4 border-b pb-2 hover:bg-black/5 transition-colors cursor-pointer ${isDarkMode ? 'border-slate-800/50' : 'border-slate-200'}`}>
-              <span className="text-cyan-600 dark:text-cyan-400 shrink-0 font-bold">[12:04:22]</span>
-              <span className="text-cyan-600 dark:text-cyan-400 font-bold">EVENT: Honeypot-B active at 172.16.0.45</span>
-            </div>
-            <div className={`flex gap-4 border-b pb-2 hover:bg-black/5 transition-colors cursor-pointer ${isDarkMode ? 'border-slate-800/50' : 'border-slate-200'}`}>
-              <span className="text-slate-500 shrink-0 font-bold">[12:04:30]</span>
-              <span className="italic opacity-80">SYNC: Multi-Agent state consistent across cluster (6 nodes).</span>
-            </div>
+            {decisions.length > 0 ? decisions.map(d => (
+              <div key={d.id} className={`flex gap-4 border-b pb-2 hover:bg-black/5 transition-colors cursor-pointer ${isDarkMode ? 'border-slate-800/50' : 'border-slate-200'}`} onClick={() => notify(`Decision ${d.id}: ${d.decisionSummary}`)}>
+                <span className="text-slate-500 shrink-0 font-bold">[{new Date(d.createdAt).toLocaleTimeString()}]</span>
+                <span><span className="text-cyan-600 dark:text-cyan-400 font-bold">[{d.agentName}]</span> {d.decisionSummary.substring(0, 80)}...</span>
+              </div>
+            )) : (
+              <div className="text-center text-slate-500 italic py-8">No agent decisions yet. Waiting for threats...</div>
+            )}
          </div>
       </div>
     </div>

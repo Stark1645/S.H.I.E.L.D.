@@ -2,9 +2,11 @@ package com.shield.repository;
 
 import com.shield.entity.ThreatEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Repository
 public interface ThreatEventRepository extends JpaRepository<ThreatEvent, Long> {
     List<ThreatEvent> findByStatus(String status);
     List<ThreatEvent> findBySourceIPAndStatus(String sourceIP, String status);
