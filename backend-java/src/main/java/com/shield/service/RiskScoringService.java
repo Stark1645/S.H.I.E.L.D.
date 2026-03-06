@@ -87,9 +87,9 @@ public class RiskScoringService {
     public String detectAttackChain(ThreatEvent threat) {
         LocalDateTime timeWindow = LocalDateTime.now().minusHours(2);
         
-        List<ThreatEvent> relatedThreats = threatRepository.findBySourceIPAndTargetSystemAndTimestampAfter(
+        // Check for related threats from same IP in time window
+        List<ThreatEvent> relatedThreats = threatRepository.findBySourceIPAndTimestampAfter(
                 threat.getSourceIP(), 
-                threat.getTargetSystem(), 
                 timeWindow
         );
         
@@ -98,9 +98,16 @@ public class RiskScoringService {
                 .distinct()
                 .count();
         
-        if (distinctThreatTypes >= 3) {
-            log.info("Potential attack campaign detected: IP={}, Target={}, ThreatTypes={}", 
-                    threat.getSourceIP(), threat.getTargetSystem(), distinctThreatTypes);
+        // Lower threshold for attack campaign detection
+        if (distinctThreatTypes >= 2 || relatedThreats.size() >= 3) {
+            log.info("Potential attack campaign detected: IP={}, ThreatTypes={}, TotalThreats={}", 
+                    threat.getSourceIP(), distinctThreatTypes, relatedThreats.size());
+            return "POTENTIAL_ATTACK_CAMPAIGN";
+        }
+        
+        // Also trigger for high-severity single threats
+        if (threat.getSeverityScore() != null && threat.getSeverityScore() >= 8.0) {
+            log.info("High-severity threat detected, triggering orchestrator: severity={}", threat.getSeverityScore());
             return "POTENTIAL_ATTACK_CAMPAIGN";
         }
         

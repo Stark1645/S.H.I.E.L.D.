@@ -78,6 +78,11 @@ public class AgentCoordinator {
         boolean isHighSeverity = threat.getSeverityScore() != null && threat.getSeverityScore() >= 7.0;
         boolean isMediumSeverity = threat.getSeverityScore() != null && threat.getSeverityScore() >= 5.0;
         
+        // Always check for attack campaigns first
+        if ("POTENTIAL_ATTACK_CAMPAIGN".equals(attackChainStatus)) {
+            orchestratorAgent.respond(threat, attackChainStatus);
+        }
+        
         if (finalRiskScore > dynamicThreshold || isHighSeverity) {
             // High risk or high severity → Immediate containment
             sentinelAlphaAgent.respond(threat, finalRiskScore, confidence);
@@ -95,8 +100,7 @@ public class AgentCoordinator {
             watcherAgent.respond(threat, finalRiskScore);
         }
         
-        if ("POTENTIAL_ATTACK_CAMPAIGN".equals(attackChainStatus)) {
-            orchestratorAgent.respond(threat, attackChainStatus);
-        }
+        log.info("Threat {} processed: finalRisk={}, severity={}, attackChain={}, agents triggered", 
+                threat.getId(), finalRiskScore, threat.getSeverityScore(), attackChainStatus);
     }
 }

@@ -31,7 +31,8 @@ export const agentAPI = {
   getAllDecisions: () => apiFetch('/agents/decisions'),
   executeAction: (threatId: string, agentName: string, action: string) => 
     apiFetch('/agents/execute', { method: 'POST', body: JSON.stringify({ threatId, agentName, action }) }),
-  getAgentStatus: () => apiFetch('/agents/status'),
+  getAgentStatus: () => apiFetch('/agents/health'),
+  getAgentList: () => apiFetch('/agents/list'),
 };
 
 const api = {

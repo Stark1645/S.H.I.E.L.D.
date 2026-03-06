@@ -1,5 +1,6 @@
 package com.shield.controller;
 
+import com.shield.dto.AgentInfo;
 import com.shield.entity.AgentDecision;
 import com.shield.service.AgentService;
 import lombok.Data;
@@ -7,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/agents")
@@ -48,29 +50,15 @@ public class AgentController {
         return ResponseEntity.ok(agentService.getAllAgents());
     }
 
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, Object>> getAgentHealth() {
+        return ResponseEntity.ok(agentService.getAgentHealthStatus());
+    }
+
     @Data
     static class ExecuteRequest {
         private Long threatId;
         private String agentName;
         private String action;
-    }
-
-    @Data
-    static class AgentInfo {
-        private String name;
-        private String displayName;
-        private String description;
-        private String status;
-        private int totalDecisions;
-        private double avgConfidence;
-        
-        public AgentInfo(String name, String displayName, String description, String status, int totalDecisions, double avgConfidence) {
-            this.name = name;
-            this.displayName = displayName;
-            this.description = description;
-            this.status = status;
-            this.totalDecisions = totalDecisions;
-            this.avgConfidence = avgConfidence;
-        }
     }
 }
