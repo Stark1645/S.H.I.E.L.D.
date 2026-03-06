@@ -9,6 +9,7 @@ import ForensicLogs from './pages/ForensicLogs';
 import ThreatRemediation from './pages/ThreatRemediation';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import SystemHealth from './pages/SystemHealth';
+import PhaseFeatures from './pages/PhaseFeatures';
 import Login from './pages/Login';
 import JarvisChat from './components/JarvisChat';
 
@@ -57,6 +58,7 @@ const Layout: React.FC<{ children: React.ReactNode, isDarkMode: boolean, toggleD
     { path: '/dashboard', label: 'War Room', icon: 'fa-shield-halved' },
     { path: '/intelligence', label: 'Intelligence', icon: 'fa-brain' },
     { path: '/analytics', label: 'Analytics', icon: 'fa-chart-line' },
+    { path: '/phases', label: 'Phase 2,3,4', icon: 'fa-rocket' },
     { path: '/remediation', label: 'Remediation', icon: 'fa-wand-magic-sparkles' },
     { path: '/simulation', label: 'Simulation', icon: 'fa-microchip' },
     { path: '/agents', label: 'Agents', icon: 'fa-robot' },
@@ -274,6 +276,7 @@ const App: React.FC = () => {
                     <Route path="/dashboard" element={<Dashboard isDarkMode={isDarkMode} />} />
                     <Route path="/intelligence" element={<ThreatIntelligence isDarkMode={isDarkMode} />} />
                     <Route path="/analytics" element={<AdvancedAnalytics isDarkMode={isDarkMode} />} />
+                    <Route path="/phases" element={<PhaseFeatures isDarkMode={isDarkMode} />} />
                     <Route path="/remediation" element={<ThreatRemediation isDarkMode={isDarkMode} />} />
                     <Route path="/simulation" element={<SimulationControl isDarkMode={isDarkMode} />} />
                     <Route path="/agents" element={<AgentMonitor isDarkMode={isDarkMode} />} />
