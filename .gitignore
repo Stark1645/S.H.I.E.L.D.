@@ -27,6 +27,8 @@ backend-java/mvnw.cmd
 # Environment files
 .env
 *.log
+application-secrets.properties
+secrets.properties
 
 # Build files
 dist/

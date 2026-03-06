@@ -18,6 +18,8 @@ public class ThreatEvent {
     private String status;
     private Double severityScore;
     private String intentClassification;
+    private Double anomalyScore;
+    private Double confidenceLevel;
     
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -26,5 +28,6 @@ public class ThreatEvent {
     private String recommendedAction;
 
     private LocalDateTime timestamp = LocalDateTime.now();
+    private LocalDateTime detectedAt = LocalDateTime.now();
     private LocalDateTime resolvedAt;
 }

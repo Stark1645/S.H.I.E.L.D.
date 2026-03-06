@@ -1,27 +1,60 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { LogType } from '../types';
 import { useNotify } from '../App';
+import { agentAPI, threatAPI } from '../services/api';
 
 const ForensicLogs: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
   const { notify } = useNotify();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
+  const [logs, setLogs] = useState<any[]>([]);
 
-  const logs = [
-    { id: 1, type: LogType.SECURITY, msg: 'Firewall drop from 103.45.1.2: SQL Injection attempt detected.', time: '2 mins ago', details: 'Target: UserDB-Prod-01, Vector: Union-Based Injection, Payload: SELECT * FROM users...' },
-    { id: 2, type: LogType.AGENT, msg: 'Sentinel-Alpha: Initiating process memory scan on WebNode-01.', time: '5 mins ago', details: 'Scanning for known ransomware signatures: Wannacry-X, Locky-2.0.' },
-    { id: 3, type: LogType.SYSTEM, msg: 'Database replication latency exceeded 200ms.', time: '12 mins ago', details: 'Region: US-EAST-1, Current: 245ms, Threshold: 200ms.' },
-    { id: 4, type: LogType.ERROR, msg: 'Authentication service heartbeat timeout.', time: '15 mins ago', details: 'Instance: Auth-Svc-A, Status: Unresponsive, Auto-Restarting...' },
-    { id: 5, type: LogType.SECURITY, msg: 'Unauthorized SSH attempt from unknown origin. Brute force suspected.', time: '22 mins ago', details: 'Attempts: 45 in 2 minutes, Origin: 45.12.89.21 (VPN), Outcome: IP Banned.' },
-  ];
+  useEffect(() => {
+    fetchLogs();
+    const interval = setInterval(fetchLogs, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchLogs = async () => {
+    try {
+      const [decisions, threats] = await Promise.all([
+        agentAPI.getAllDecisions(),
+        threatAPI.getAll()
+      ]);
+
+      const agentLogs = decisions.slice(0, 15).map((d: any) => ({
+        id: `A-${d.id}`,
+        type: LogType.AGENT,
+        msg: `${d.agentName}: ${d.decisionSummary}`,
+        time: new Date(d.createdAt).toLocaleString(),
+        details: `Confidence: ${(d.confidenceScore * 100).toFixed(1)}%, Threat ID: ${d.linkedThreatId}, Action: ${d.decisionSummary}`
+      }));
+
+      const threatLogs = threats.slice(0, 15).map((t: any) => ({
+        id: `T-${t.id}`,
+        type: t.severityScore >= 7 ? LogType.SECURITY : LogType.SYSTEM,
+        msg: `${t.threatType} detected from ${t.sourceIP} targeting ${t.targetSystem}`,
+        time: new Date(t.detectedAt).toLocaleString(),
+        details: `Severity: ${t.severityScore}/10, Status: ${t.status}, Intent: ${t.intentClassification || 'Unknown'}`
+      }));
+
+      const combinedLogs = [...agentLogs, ...threatLogs]
+        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+        .slice(0, 30);
+
+      setLogs(combinedLogs);
+    } catch (error) {
+      console.error('Failed to fetch logs:', error);
+    }
+  };
 
   const filteredLogs = useMemo(() => {
     return logs.filter(l => 
       l.msg.toLowerCase().includes(searchQuery.toLowerCase()) || 
       l.type.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [logs, searchQuery]);
 
   const handleDownload = () => {
     setIsDownloading(true);

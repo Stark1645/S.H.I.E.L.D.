@@ -18,6 +18,8 @@ public class ThreatService {
     private final MLServiceClient mlClient;
     private final RiskScoringService riskScoringService;
     private final EmailService emailService;
+    private final WebSocketService webSocketService;
+    private final SIEMIntegrationService siemService;
 
     public List<ThreatEvent> getAllThreats() {
         return threatRepository.findAll();
@@ -29,6 +31,10 @@ public class ThreatService {
     }
 
     public ThreatEvent createThreat(ThreatEvent threat) {
+        log.info("=== CREATE THREAT CALLED ===");
+        log.info("Threat details: type={}, source={}, severity={}", 
+            threat.getThreatType(), threat.getSourceIP(), threat.getSeverityScore());
+        
         if (threat == null) {
             throw new IllegalArgumentException("Threat cannot be null");
         }
@@ -61,7 +67,15 @@ public class ThreatService {
                 savedThreat.getId(), savedThreat.getSeverityScore(), finalRiskScore, attackChain);
         
         // Send email notification
+        log.info("=== CALLING EMAIL SERVICE ===");
         emailService.sendThreatAlert(savedThreat);
+        log.info("=== EMAIL SERVICE CALL COMPLETED ===");
+        
+        // Send WebSocket notification
+        webSocketService.sendThreatAlert(savedThreat);
+        
+        // Send to SIEM systems
+        siemService.broadcastThreat(savedThreat);
         
         return savedThreat;
     }

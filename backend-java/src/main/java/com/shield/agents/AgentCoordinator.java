@@ -74,13 +74,23 @@ public class AgentCoordinator {
         
         String attackChainStatus = riskScoringService.detectAttackChain(threat);
         
-        if (finalRiskScore > dynamicThreshold) {
+        // More aggressive containment: Lower threshold for high-severity threats
+        boolean isHighSeverity = threat.getSeverityScore() != null && threat.getSeverityScore() >= 7.0;
+        boolean isMediumSeverity = threat.getSeverityScore() != null && threat.getSeverityScore() >= 5.0;
+        
+        if (finalRiskScore > dynamicThreshold || isHighSeverity) {
+            // High risk or high severity → Immediate containment
             sentinelAlphaAgent.respond(threat, finalRiskScore, confidence);
             defenderPrimeAgent.respond(threat, finalRiskScore);
             
-        } else if (finalRiskScore > (dynamicThreshold * 0.6)) {
+        } else if (finalRiskScore > (dynamicThreshold * 0.6) || isMediumSeverity) {
+            // Medium risk or medium severity → Surveillance + possible containment
             riskEvaluatorAgent.respond(threat, confidence);
             analyzerBetaAgent.respond(threat);
+            // Also trigger containment for medium severity
+            if (isMediumSeverity) {
+                defenderPrimeAgent.respond(threat, finalRiskScore);
+            }
         } else {
             watcherAgent.respond(threat, finalRiskScore);
         }

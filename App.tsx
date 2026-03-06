@@ -10,6 +10,7 @@ import ThreatRemediation from './pages/ThreatRemediation';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import SystemHealth from './pages/SystemHealth';
 import Login from './pages/Login';
+import JarvisChat from './components/JarvisChat';
 
 // --- Contexts ---
 interface AuthContextType {
@@ -280,6 +281,7 @@ const App: React.FC = () => {
                     <Route path="/logs" element={<ForensicLogs isDarkMode={isDarkMode} />} />
                     <Route path="/" element={<Navigate to="/dashboard" />} />
                   </Routes>
+                  <JarvisChat isDarkMode={isDarkMode} />
                 </Layout>
               ) : (
                 <Navigate to="/login" />
