@@ -18,7 +18,7 @@ const AgentMonitor: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
         
         // Calculate agent statistics from real decisions
         const stats: any = {};
-        const agentNames = ['SENTINEL-ALPHA', 'DEFENDER-PRIME', 'RISK-EVALUATOR', 'ANALYZER-BETA', 'WATCHER', 'ORCHESTRATOR'];
+        const agentNames = ['SENTINEL-ALPHA', 'DEFENDER-PRIME', 'RISK-EVALUATOR', 'ANALYZER-BETA', 'WATCHER', 'ORCHESTRATOR', 'RESOLVER'];
         
         agentNames.forEach(name => {
           const agentDecisions = data.filter((d: any) => d.agentName === name);
@@ -67,6 +67,7 @@ const AgentMonitor: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
     { name: 'ANALYZER-BETA', displayName: 'Analyzer Beta', desc: 'Deep packet inspection and forensic analysis' },
     { name: 'WATCHER', displayName: 'Watcher', desc: 'Continuous monitoring and activity logging' },
     { name: 'ORCHESTRATOR', displayName: 'Orchestrator', desc: 'Honeypot deployment and deception tactics' },
+    { name: 'RESOLVER', displayName: 'Resolver', desc: 'Auto-resolution of contained threats after timeout' },
   ];
 
   const handleAction = (agentName: string, action: string) => {

@@ -43,10 +43,34 @@ public class AgentController {
         ));
     }
 
+    @GetMapping("/list")
+    public ResponseEntity<List<AgentInfo>> getAllAgents() {
+        return ResponseEntity.ok(agentService.getAllAgents());
+    }
+
     @Data
     static class ExecuteRequest {
         private Long threatId;
         private String agentName;
         private String action;
+    }
+
+    @Data
+    static class AgentInfo {
+        private String name;
+        private String displayName;
+        private String description;
+        private String status;
+        private int totalDecisions;
+        private double avgConfidence;
+        
+        public AgentInfo(String name, String displayName, String description, String status, int totalDecisions, double avgConfidence) {
+            this.name = name;
+            this.displayName = displayName;
+            this.description = description;
+            this.status = status;
+            this.totalDecisions = totalDecisions;
+            this.avgConfidence = avgConfidence;
+        }
     }
 }

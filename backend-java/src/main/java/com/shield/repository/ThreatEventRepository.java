@@ -11,4 +11,6 @@ public interface ThreatEventRepository extends JpaRepository<ThreatEvent, Long> 
     List<ThreatEvent> findByStatus(String status);
     List<ThreatEvent> findBySourceIPAndStatus(String sourceIP, String status);
     List<ThreatEvent> findBySourceIPAndTargetSystemAndTimestampAfter(String sourceIP, String targetSystem, LocalDateTime after);
+    List<ThreatEvent> findBySourceIPAndTimestampAfter(String sourceIP, LocalDateTime after);
+    long countByStatusIn(List<String> statuses);
 }

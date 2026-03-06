@@ -1,5 +1,6 @@
 package com.shield.service;
 
+import com.shield.controller.AgentController;
 import com.shield.entity.AgentDecision;
 import com.shield.entity.ThreatEvent;
 import com.shield.repository.AgentDecisionRepository;
@@ -86,5 +87,34 @@ public class AgentService {
 
     public List<AgentDecision> getDecisionsByAgent(String agentName) {
         return decisionRepository.findByAgentName(agentName);
+    }
+
+    public List<AgentController.AgentInfo> getAllAgents() {
+        List<AgentController.AgentInfo> agents = new java.util.ArrayList<>();
+        String[] agentNames = {"SENTINEL-ALPHA", "DEFENDER-PRIME", "RISK-EVALUATOR", "ANALYZER-BETA", "WATCHER", "ORCHESTRATOR", "RESOLVER"};
+        String[] displayNames = {"Sentinel Alpha", "Defender Prime", "Risk Evaluator", "Analyzer Beta", "Watcher", "Orchestrator", "Resolver"};
+        String[] descriptions = {
+            "System isolation and containment specialist",
+            "Network perimeter defense and IP blocking",
+            "Threat assessment and surveillance escalation",
+            "Deep packet inspection and forensic analysis",
+            "Continuous monitoring and activity logging",
+            "Honeypot deployment and deception tactics",
+            "Auto-resolution of contained threats after timeout"
+        };
+        
+        for (int i = 0; i < agentNames.length; i++) {
+            List<AgentDecision> decisions = getDecisionsByAgent(agentNames[i]);
+            double avgConfidence = decisions.isEmpty() ? 0.0 : 
+                decisions.stream().mapToDouble(AgentDecision::getConfidenceScore).average().orElse(0.0);
+            String status = decisions.isEmpty() ? "Standby" : "Active";
+            
+            agents.add(new AgentController.AgentInfo(
+                agentNames[i], displayNames[i], descriptions[i], 
+                status, decisions.size(), avgConfidence
+            ));
+        }
+        
+        return agents;
     }
 }

@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["maven", "jdk17"]
+
+[phases.build]
+cmds = ["cd backend-java && mvn clean package -DskipTests"]
+
+[phases.start]
+cmd = "cd backend-java && java -Dserver.port=$PORT -jar target/*.jar"
